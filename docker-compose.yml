@@ -9,6 +9,8 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+    networks:
+      - kafka-net
 
   kafka:
     image: wurstmeister/kafka:latest
@@ -23,8 +25,12 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
+          cpus: "2"
           memory: 1G
+    depends_on:
+      - zookeeper
+    networks:
+      - kafka-net
 
   app:
     build: .
@@ -40,3 +46,10 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+    networks:
+      - kafka-net
+
+# 這邊一以定要設定，不然連接不上
+networks:
+  kafka-net:
+    driver: bridge

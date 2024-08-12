@@ -4,8 +4,10 @@ import json
 
 kafka_config = {
     'bootstrap.servers': 'kafka:9092',
-    # 'client.id': 'your_client_id',
-}
+    'acks': 'all',  # 確保消息被所有副本接收
+    'retries': 5,   # 重試次數
+    'retry.backoff.ms': 1000,
+    }
 producer = Producer(kafka_config)
 
 message_batch = []
@@ -26,11 +28,10 @@ def send_batch_to_kafka(topic):
     with batch_lock: 
         if message_batch:
             for msg in message_batch:
-                # symbol = msg.get("symbol")
+                symbol = msg.get("symbol")
                 json_data = json.dumps(msg).encode('utf-8')
                 # 這邊一定要用bytes-like，也就是壓成json，再壓成字串
-                print("producer 1111:1111")
-                producer.produce(topic, value=json_data, callback=delivery_report)
+                producer.produce(topic, key=str(symbol), value=json_data, callback=delivery_report)
             producer.poll(0)
             message_batch.clear()
 

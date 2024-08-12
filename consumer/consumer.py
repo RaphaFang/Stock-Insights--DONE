@@ -4,13 +4,15 @@ import json
 
 kafka_config = {
     'bootstrap.servers': 'kafka:9092',
-    'group.id': 'your_group_id', 
+    'group.id': 'per_sec_data_group', 
     'auto.offset.reset': 'latest',
     'session.timeout.ms': 30000, 
     'max.poll.interval.ms': 60000
 }
 
 def create_consumer(topic):
+    # time.sleep(10)
+
     consumer = Consumer(kafka_config)
     consumer.subscribe([topic])
 

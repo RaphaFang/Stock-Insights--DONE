@@ -6,8 +6,8 @@ import time
 
 def main():
     time.sleep(10)
-    create_kafka_topic('raw_data', num_partitions=1)
-    create_kafka_topic('processed_data', num_partitions=1)
+    create_kafka_topic('raw_data', num_partitions=5)
+    create_kafka_topic('per_sec_data', num_partitions=5)
 
     ws_handler = WebSocketHandler(handle_data_callback=add_to_batch)
     ws_handler.start()

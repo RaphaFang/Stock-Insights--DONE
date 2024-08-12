@@ -11,11 +11,11 @@ class WebSocketHandler:
 
     def handle_message(self, message):
         data = json.loads(message)
-        print(data)
-        # if data.get("event")=="data":
-        #     self.handle_data_callback(data.get("data"))
-        print(f"print from we: {data}")
-        self.handle_data_callback(data)
+        if data.get("event")=="data":
+            aaa = data.get("data")
+            self.handle_data_callback(aaa)
+        # print(f"print from we: {data}")
+        # self.handle_data_callback(data)
              
     def handle_connect(self):
         print('connected')

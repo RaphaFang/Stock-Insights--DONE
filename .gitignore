@@ -148,3 +148,6 @@ cython_debug/
 
 checkpoint/*
 !checkpoint/.gitkeep
+
+tmp/spark_checkpoints/*
+!tmp/spark_checkpoints/.gitkeep

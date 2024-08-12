@@ -32,9 +32,13 @@ def main():
         .load()
 
     def process_batch(df, epoch_id):
+        print("hihihihih")
+        df.printSchema() 
+        df.show()
         if df.rdd.isEmpty():
             print(f"Batch {epoch_id} is empty, skipping processing.")
             return
+
 
         df = df.selectExpr("CAST(value AS STRING) as json_data") \
             .select(from_json(col("json_data"), schema).alias("data")) \
@@ -44,7 +48,7 @@ def main():
 
         # df.printSchema()  # 這是檢查用的，
 
-# 讀取出資料，並且建立計算基本資料，並且使用withWatermark然下面沒辦法用append
+    # 讀取出資料，並且建立計算基本資料，並且使用withWatermark然下面沒辦法用append
         windowed_df = df.groupBy(
             window(col("time"), "1 second"),
             col("symbol")
@@ -55,7 +59,7 @@ def main():
             last("time", ignorenulls=True).alias("last_data_time"),
             last("isContinuous", ignorenulls=True).alias("isContinuous")
         )
-# 計算每秒資料，並且調整欄位名稱，準備輸出
+    # 計算每秒資料，並且調整欄位名稱，準備輸出
         result_df = windowed_df.withColumn(
             "vwap_price_per_sec", col("price_time_size") / col("size_per_sec")
         ).select(

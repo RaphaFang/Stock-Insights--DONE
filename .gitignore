@@ -140,5 +140,11 @@ cython_debug/
 # macOS
 .DS_Store
 
-# 我的環境變數
+# ------------------------------------------------------------------------------
 .env
+
+.ivy2/*
+!.ivy2/.gitkeep
+
+checkpoint/*
+!checkpoint/.gitkeep

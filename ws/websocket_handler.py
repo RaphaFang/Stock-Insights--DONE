@@ -13,7 +13,7 @@ class WebSocketHandler:
         data = json.loads(message)
         if data.get("event")=="data":
             aaa = data.get("data")
-            print(f"i send sth from ws.{aaa}")
+            # print(f"i send sth from ws.{aaa}")
             self.handle_data_callback(aaa)
         # print(f"print from we: {data}")
         # self.handle_data_callback(data)

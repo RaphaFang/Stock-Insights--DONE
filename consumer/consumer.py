@@ -31,7 +31,7 @@ def create_consumer(topic):
 
             raw =  json.loads(msg.value().decode("utf-8"))
             # print(f"print from consumer: {raw}")
-            print("print from consumer: got msg")
+            print(f"print from consumer: got msg {raw}")
 
 
             # print(raw)
@@ -41,7 +41,7 @@ def create_consumer(topic):
         pass
     except Exception as e:
         print(f"Error occurred: {e}, retrying...")
-        time.sleep(5)  # 等待5秒后重试
+        time.sleep(5) 
     finally:
         consumer.close()
 

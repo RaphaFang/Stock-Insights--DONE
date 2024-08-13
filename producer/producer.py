@@ -3,6 +3,13 @@ import threading
 import json
 from collections import deque
 
+stock_to_partition = {
+    "2330": 0,
+    "0050": 1,
+    "00670L": 2,
+    "2454": 3,
+    "2603": 4
+}
 
 kafka_config = {
     'bootstrap.servers': 'kafka:9092',
@@ -21,30 +28,20 @@ def delivery_report(err, msg):
     else:
         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
-# def get_empty_data():
-#     return {
-#         "symbol": symbol,
-#         "timestamp": current_timestamp(),  # 確保時間戳與資料對應
-#         "trade_volume": 0
-#     }    
-
 def send_batch_to_kafka(topic):
-
     if msg_deque:
         batch = list(msg_deque)
         msg_deque.clear()
         for msg in batch:
-            symbol = msg.get("symbol")    #
-            # event = msg.get("event")
-            print(f"Symbol: {symbol}")
-            # key = f"{symbol}_abcdefg"
+            symbol = msg.get("symbol")
+            par = stock_to_partition.get(symbol)
 
-            json_data = json.dumps(msg).encode('utf-8')  # 這邊一定要用bytes-like，也就是壓成json，再壓成字串
-            producer.produce(topic, key=str(symbol), value=json_data, callback=delivery_report)
+            if par is not None:
+                print(f"Symbol: {symbol}, Partition : {par}")
+                json_data = json.dumps(msg).encode('utf-8')  # 這邊一定要用bytes-like，也就是壓成json，再壓成字串
+                producer.produce(topic, partition=par, value=json_data, callback=delivery_report)
         producer.poll(0)
         producer.flush()
-
-
     threading.Timer(1.0, send_batch_to_kafka, [topic]).start()
 
 def add_to_batch(data):

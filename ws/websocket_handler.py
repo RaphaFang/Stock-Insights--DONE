@@ -13,6 +13,7 @@ class WebSocketHandler:
         data = json.loads(message)
         if data.get("event")=="data":
             aaa = data.get("data")
+            print(f"i send sth from ws.{aaa}")
             self.handle_data_callback(aaa)
         # print(f"print from we: {data}")
         # self.handle_data_callback(data)
@@ -38,19 +39,19 @@ class WebSocketHandler:
             "channel": 'trades',
             "symbol": '2330',
         })
-        # stock.subscribe({
-        #     "channel": 'trades',
-        #     "symbol": '0050',
-        # })
-        # stock.subscribe({
-        #     "channel": 'trades',
-        #     "symbol": '00670L',
-        # })
-        # stock.subscribe({
-        #     "channel": 'trades',
-        #     "symbol": '2454',
-        # })
-        # stock.subscribe({
-        #     "channel": 'trades',
-        #     "symbol": '2603',
-        # })
+        stock.subscribe({
+            "channel": 'trades',
+            "symbol": '0050',
+        })
+        stock.subscribe({
+            "channel": 'trades',
+            "symbol": '00670L',
+        })
+        stock.subscribe({
+            "channel": 'trades',
+            "symbol": '2454',
+        })
+        stock.subscribe({
+            "channel": 'trades',
+            "symbol": '2603',
+        })

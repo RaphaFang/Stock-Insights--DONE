@@ -6,14 +6,14 @@ import time
 
 def main():
     time.sleep(10)
-    create_kafka_topic('raw_data', num_partitions=5)
-    create_kafka_topic('per_sec_data', num_partitions=5)
+    create_kafka_topic('kafka_raw_data', num_partitions=5)
+    create_kafka_topic('kafka_per_sec_data', num_partitions=5)
 
     ws_handler = WebSocketHandler(handle_data_callback=add_to_batch)
     ws_handler.start()
 
-    send_batch_to_kafka('raw_data')
-    create_consumer('raw_data')  ## 暫時留著，未來檢查ws輸入用
+    send_batch_to_kafka('kafka_raw_data')
+    # create_consumer('raw_data')  ## 暫時留著，未來檢查ws輸入用
 
 if __name__ == "__main__":
     main()

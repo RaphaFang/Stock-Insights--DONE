@@ -11,7 +11,6 @@ kafka_config = {
 }
 
 def create_consumer(topic):
-    # time.sleep(10)
 
     consumer = Consumer(kafka_config)
     consumer.subscribe([topic])
@@ -31,7 +30,9 @@ def create_consumer(topic):
                     break
 
             raw =  json.loads(msg.value().decode("utf-8"))
-            print(f"print from consumer: {raw}")
+            # print(f"print from consumer: {raw}")
+            print("print from consumer: got msg")
+
 
             # print(raw)
 

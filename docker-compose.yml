@@ -2,6 +2,8 @@ version: "3.8"
 services:
   zookeeper:
     image: wurstmeister/zookeeper:latest
+    container_name: zookeeper
+
     ports:
       - "2181:2181"
     deploy:
@@ -14,6 +16,8 @@ services:
 
   kafka:
     image: wurstmeister/kafka:latest
+    container_name: kafka
+
     ports:
       - "9092:9092"
     environment:
@@ -34,6 +38,7 @@ services:
 
   app:
     build: .
+    container_name: app
     env_file:
       - .env
     ports:

@@ -47,7 +47,8 @@ services:
     command: >
       bash -c "
       mkdir -p /opt/bitnami/spark/.ivy2/local &&
-      spark-submit 
+      spark-submit
+      --conf spark.sql.session.timeZone=Asia/Taipei
       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2 
       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2 
       --master spark://spark-master:7077 

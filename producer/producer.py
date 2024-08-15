@@ -2,6 +2,7 @@ from confluent_kafka import Producer
 import threading
 import json
 from collections import deque
+from datetime import datetime
 
 stock_to_partition = {
     "2330": 0,
@@ -13,14 +14,14 @@ stock_to_partition = {
 
 kafka_config = {
     'bootstrap.servers': 'kafka:9092',
-    'acks': 'all',  # 確保消息被所有副本接收
-    'retries': 5,   # 重試次數
+    'acks': 'all', 
+    'retries': 5,   
     'retry.backoff.ms': 1000,
-    'delivery.timeout.ms': 30000,  # 增加超時時間到 30 秒
+    'delivery.timeout.ms': 30000, 
     }
 producer = Producer(kafka_config)
 
-msg_deque = deque()
+msg_deques = {symbol: deque() for symbol in stock_to_partition}
 
 def delivery_report(err, msg):
     if err is not None:
@@ -28,24 +29,51 @@ def delivery_report(err, msg):
     else:
         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
-def send_batch_to_kafka(topic):
-    if msg_deque:
-        batch = list(msg_deque)
-        msg_deque.clear()
-        for msg in batch:
-            symbol = msg.get("symbol")
-            par = stock_to_partition.get(symbol)
+def send_heartbeat(symbol, topic):
+    heartbeat_message = {
+        "symbol": symbol,
+        "type": "heartbeat",
+        "exchange": None,
+        "market": None,
+        "price": 0.0,
+        "size": 0,
+        "bid": 0.0,
+        "ask": 0.0,
+        "volume": 0,
+        "isContinuous": False,
+        "time": int(datetime.utcnow().timestamp() * 1000000),  # Unix时间戳，单位为微秒
+        "serial": "heartbeat_serial",
+        "id": "heartbeat_id",
+        "channel": "heartbeat_channel"
+    }
 
-            if par is not None:
+    partition = stock_to_partition[symbol]
+    json_data = json.dumps(heartbeat_message).encode('utf-8')
+    producer.produce(topic, partition=partition, value=json_data, callback=delivery_report)
+    print(f"Heartbeat sent to topic {topic} for symbol {symbol}")
+
+def send_batch_to_kafka(topic):
+    for symbol, deque in msg_deques.items():
+        if deque:
+            batch = list(deque)
+            deque.clear()
+            for msg in batch:
+                par = stock_to_partition[symbol]
                 print(f"Symbol: {symbol}, Partition : {par}")
-                json_data = json.dumps(msg).encode('utf-8')  # 這邊一定要用bytes-like，也就是壓成json，再壓成字串
+                json_data = json.dumps(msg).encode('utf-8')
                 producer.produce(topic, partition=par, value=json_data, callback=delivery_report)
-        producer.poll(0)
-        producer.flush()
+        else:
+            send_heartbeat(symbol, topic)
+
+    producer.poll(0)
+    producer.flush()
     threading.Timer(1.0, send_batch_to_kafka, [topic]).start()
 
 def add_to_batch(data):
-    msg_deque.append(data)
+    symbol = data.get("symbol")
+    if symbol in msg_deques:
+        msg_deques[symbol].append(data)
+
 
 
 # ------------------------------------------------------------
@@ -55,3 +83,24 @@ def add_to_batch(data):
 # message_batch = []
 # batch_lock = threading.Lock() 
     
+# ------------------------------------------------------------
+# msg_deque = deque()
+
+# def send_batch_to_kafka(topic):
+#     if msg_deque:
+#         batch = list(msg_deque)
+#         msg_deque.clear()
+#         for msg in batch:
+#             symbol = msg.get("symbol")
+#             par = stock_to_partition.get(symbol)
+
+#             if par is not None:
+#                 print(f"Symbol: {symbol}, Partition : {par}")
+#                 json_data = json.dumps(msg).encode('utf-8')  # 這邊一定要用bytes-like，也就是壓成json，再壓成字串
+#                 producer.produce(topic, partition=par, value=json_data, callback=delivery_report)
+#         producer.poll(0)
+#         producer.flush()
+#     threading.Timer(1.0, send_batch_to_kafka, [topic]).start()
+
+# def add_to_batch(data):
+#     msg_deque.append(data)

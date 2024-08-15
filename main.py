@@ -5,10 +5,10 @@ from consumer.consumer import create_consumer
 import time
 
 def main():
-    time.sleep(10)
+    # time.sleep(10)
     create_kafka_topic('kafka_raw_data', num_partitions=5)
     create_kafka_topic('kafka_per_sec_data', num_partitions=5)
-    create_kafka_topic('kafka_processed_data', num_partitions=5)
+    # create_kafka_topic('kafka_processed_data', num_partitions=5)
 
 
     ws_handler = WebSocketHandler(handle_data_callback=add_to_batch)

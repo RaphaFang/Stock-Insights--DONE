@@ -17,12 +17,12 @@ def create_kafka_topic(topic_name, num_partitions=1, replication_factor=1):
     topic = NewTopic(topic_name, num_partitions=num_partitions, replication_factor=replication_factor)
     try:
         fs = admin_client.create_topics([topic])
-        ## 下方的好像不必要執行
-        # for topic, future in fs.items():
-        #     try:
-        #         future.result()
-        #         print(f"Topic '{topic}' created successfully. Got {num_partitions} partitions.")
-        #     except KafkaException as e:
-        #         print(f"Failed to create topic '{topic}': {e}")
+        # 下方的好像不必要執行
+        for topic, future in fs.items():
+            try:
+                future.result()
+                print(f"Topic '{topic}' created successfully. Got {num_partitions} partitions.")
+            except KafkaException as e:
+                print(f"Failed to create topic '{topic}': {e}")
     except KafkaException as e:
         print(f"Failed to create topic '{topic_name}': {e}")

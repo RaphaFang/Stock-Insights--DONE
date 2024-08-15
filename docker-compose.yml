@@ -24,6 +24,7 @@ services:
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OPTS: "-Duser.timezone=Asia/Taipei"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:

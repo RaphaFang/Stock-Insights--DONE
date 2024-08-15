@@ -53,5 +53,5 @@ class WebSocketHandler:
         })
         stock.subscribe({
             "channel": 'trades',
-            "symbol": '2603',
+            "symbol": '6115',
         })

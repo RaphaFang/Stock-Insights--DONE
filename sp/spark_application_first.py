@@ -4,6 +4,8 @@ from pyspark.sql.functions import from_json, col, window, sum as spark_sum, coun
 from pyspark.sql.functions import current_timestamp, window, when, lit, coalesce
 from pyspark.sql import Row
 from datetime import datetime
+from pyspark.sql import functions as SF
+
 
 def main():
     schema = StructType([
@@ -22,18 +24,7 @@ def main():
         StructField("id", StringType(), True),
         StructField("channel", StringType(), True)
     ])
-    result_schema = StructType([
-        StructField("symbol", StringType(), True),
-        StructField("type", StringType(), True),
-        StructField("vwap_price_per_sec", DoubleType(), True),
-        StructField("size_per_sec", DoubleType(), True),
-        StructField("volume_till_now", IntegerType(), True),
-        StructField("last_data_time", TimestampType(), True),
-        StructField("window_start", TimestampType(), True),
-        StructField("window_end", TimestampType(), True),
-        StructField("current_time", TimestampType(), True)
-    ])
-        
+
     spark = SparkSession.builder \
         .appName("spark_app_first") \
         .config("spark.executor.cores", "2") \
@@ -60,48 +51,40 @@ def main():
             .select("data.*")
 
         # ! 篩選第二次，只有心跳的情況
-        non_heartbeat_df = df.filter(col("type") != "heartbeat")
-        if non_heartbeat_df.rdd.isEmpty():
-            # print(f"Batch {epoch_id} contains only heartbeat data.")
-            heartbeat_symbol = df.select("symbol").distinct().collect()[0]["symbol"]
-            heartbeat_time_str = df.select("time").distinct().collect()[0]["time"]
-            heartbeat_time = datetime.fromtimestamp(int(heartbeat_time_str) / 1000000)  # 转换为秒
 
-            current_time = datetime.utcnow()
+        df = df.withColumn("time", to_timestamp(col("time") / 1000000))
+        windowed_df = df.groupBy(
+            window(col("time"), "1 second", "1 second"),
+            col("symbol")
+        ).agg(
+            SF.sum(SF.when(col("type") != "heartbeat", col("price") * col("size")).otherwise(0)).alias("price_time_size"),
+            SF.sum(SF.when(col("type") != "heartbeat", col("size")).otherwise(0)).alias("size_per_sec"),
+            SF.last(SF.when(col("type") != "heartbeat", col("volume")), ignorenulls=True).alias("volume_till_now"),
+            SF.last("time", ignorenulls=True).alias("last_data_time"),
+            SF.count("*").alias("data_count"),
+            SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("check")  
 
-            filled_data = [
-                Row(symbol=heartbeat_symbol,type="filled_data" ,vwap_price_per_sec=None, size_per_sec=0.0, volume_till_now=0, 
-                    last_data_time=heartbeat_time, window_start=None, window_end=None, 
-                    current_time=current_time)]
-            result_df = spark.createDataFrame(filled_data, schema=result_schema)
-
-        else:
-            df = non_heartbeat_df.withColumn("time", to_timestamp(col("time") / 1000000))
-            windowed_df = df.groupBy(
-                window(col("time"), "1 second", "1 second"),
-                col("symbol")
-            ).agg(
-                spark_sum(col("price") * col("size")).alias("price_time_size"),  
-                spark_sum("size").alias("size_per_sec"),
-                last("volume", ignorenulls=True).alias("volume_till_now"),
-                last("time", ignorenulls=True).alias("last_data_time"),
-            )
-            # 計算每秒資料，並且調整欄位名稱，準備輸出
-            result_df = windowed_df.withColumn(
-                "vwap_price_per_sec", col("price_time_size") / col("size_per_sec")
-            ).select(
-                "symbol",
-                lit("per_sec_data").alias("type"),
-                "vwap_price_per_sec",
-                "size_per_sec",
-                "volume_till_now",
-                "last_data_time",
-                "window.start", 
-                "window.end",
-                current_timestamp().alias("current_time"),
-                # "last_serial as serial",  # 這個架構好像不支持這樣重新命名的操作
-                # col("last_isClose").alias("isClose"),  # 不然就是要這樣命名
-            )
+        )
+        # 調整欄位名稱，準備輸出
+        result_df = windowed_df.withColumn(
+            "vwap_price_per_sec", col("price_time_size") / col("size_per_sec")
+        ).withColumn(
+            "real_or_filled", SF.when(col("check") > 0, "real").otherwise("filled")
+        ).select(
+            "symbol",
+            lit("per_sec_data").alias("type"),
+            "real_or_filled",
+            "vwap_price_per_sec",
+            "size_per_sec",
+            "volume_till_now",
+            "last_data_time",
+            "window.start", 
+            "window.end",
+            current_timestamp().alias("current_time"),
+            "data_count",
+            # "last_serial as serial",  # 這個架構好像不支持這樣重新命名的操作
+            # col("last_isClose").alias("isClose"),  # 不然就是要這樣命名
+        )
 
         result_df.selectExpr(
             "CAST(symbol AS STRING) AS key",

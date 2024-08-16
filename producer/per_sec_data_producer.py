@@ -1,5 +1,6 @@
-from confluent_kafka import Consumer, Producer, KafkaError
+import asyncio
 import json
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
 stock_to_partition = {
     "2330": 0,
@@ -8,6 +9,7 @@ stock_to_partition = {
     "2454": 3,
     "6115": 4
 }
+
 consumer_config = {
     'bootstrap.servers': 'kafka:9092',
     'group.id': 'kafka_per_sec_data_group',
@@ -16,33 +18,33 @@ consumer_config = {
 producer_config = {
     'bootstrap.servers': 'kafka:9092',
 }
-consumer = Consumer(consumer_config)
-producer = Producer(producer_config)
-consumer.subscribe(['kafka_per_sec_data'])
 
-def send_to_partitioned_topic(symbol, message):
+async def send_to_partitioned_topic(symbol, message, producer):
     par = stock_to_partition.get(symbol, 0)
-    producer.produce('kafka_per_sec_data_partition', value=json.dumps(message), partition=par)
-    producer.flush()
+    await producer.send_and_wait('kafka_per_sec_data_partition', value=json.dumps(message).encode('utf-8'), partition=par)
 
-def kafka_per_sec_data_producer():
+async def kafka_per_sec_data_producer():
+    consumer = AIOKafkaConsumer(
+        'kafka_per_sec_data',
+        bootstrap_servers=consumer_config['bootstrap.servers'],
+        group_id=consumer_config['group.id'],
+        auto_offset_reset=consumer_config['auto.offset.reset']
+    )
+    producer = AIOKafkaProducer(
+        bootstrap_servers=producer_config['bootstrap.servers']
+    )
+
+    await consumer.start()
+    await producer.start()
+
     try:
-        while True:
-            msg = consumer.poll(timeout=1.0)
-            if msg is None:
-                continue
-            if msg.error():
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    continue
-                else:
-                    print(msg.error())
-                    break
-            
-            raw_message = json.loads(msg.value().decode('utf-8'))
+        async for msg in consumer:
+            raw_message = json.loads(msg.value.decode('utf-8'))
             symbol = raw_message.get('symbol')
-            send_to_partitioned_topic(symbol, raw_message)
+            await send_to_partitioned_topic(symbol, raw_message, producer)
 
     except KeyboardInterrupt:
         pass
     finally:
-        consumer.close()
+        await consumer.stop()
+        await producer.stop()

@@ -1,7 +1,7 @@
-from confluent_kafka import Producer
-import threading
+import asyncio
 import json
 from collections import deque
+from aiokafka import AIOKafkaProducer
 from datetime import datetime
 
 stock_to_partition = {
@@ -11,7 +11,6 @@ stock_to_partition = {
     "2454": 3,
     "6115": 4
 }
-
 kafka_config = {
     'bootstrap.servers': 'kafka:9092',
     'acks': 'all', 
@@ -19,17 +18,10 @@ kafka_config = {
     'retry.backoff.ms': 1000,
     'delivery.timeout.ms': 30000, 
     }
-producer = Producer(kafka_config)
-
 msg_deques = {symbol: deque() for symbol in stock_to_partition}
 
-# def delivery_report(err, msg):
-#     if err is not None:
-#         print(f"Message delivery failed: {err}")
-#     else:
-#         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
-def send_heartbeat(symbol, topic):
+async def send_heartbeat(symbol, topic, producer):
     heartbeat_message = {
         "symbol": symbol,
         "type": "heartbeat",
@@ -49,25 +41,28 @@ def send_heartbeat(symbol, topic):
 
     partition = stock_to_partition[symbol]
     json_data = json.dumps(heartbeat_message).encode('utf-8')
-    producer.produce(topic, partition=partition, value=json_data)  # , callback=delivery_report
+    await producer.send_and_wait(topic, value=json_data, partition=partition)
     # print(f"Heartbeat sent to topic {topic} for symbol {symbol}")
 
-def send_batch_to_kafka(topic):
-    for symbol, deque in msg_deques.items():
-        if deque:
-            batch = list(deque)
-            deque.clear()
-            for msg in batch:
-                par = stock_to_partition[symbol]
-                # print(f"Symbol: {symbol}, Partition : {par}")
-                json_data = json.dumps(msg).encode('utf-8')
-                producer.produce(topic, partition=par, value=json_data) #, callback=delivery_report
-        else:
-            send_heartbeat(symbol, topic)
 
-    producer.poll(0)
-    producer.flush()
-    threading.Timer(1.0, send_batch_to_kafka, [topic]).start()
+async def send_batch_to_kafka(topic):
+    producer = AIOKafkaProducer(**kafka_config)
+    await producer.start()
+    try:
+        while True:
+            for symbol, deque in msg_deques.items():
+                if deque:
+                    batch = list(deque)
+                    deque.clear()
+                    for msg in batch:
+                        partition = stock_to_partition[symbol]
+                        json_data = json.dumps(msg).encode('utf-8')
+                        await producer.send_and_wait(topic, value=json_data, partition=partition)
+                else:
+                    await send_heartbeat(producer, symbol, topic)
+            await asyncio.sleep(1)
+    finally:
+        await producer.stop()
 
 def add_to_batch(data):
     symbol = data.get("symbol")

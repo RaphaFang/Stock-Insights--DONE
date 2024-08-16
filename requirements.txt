@@ -5,3 +5,4 @@ requests
 aiohttp
 # asyncpg
 pyspark==3.5.0
+aiokafka

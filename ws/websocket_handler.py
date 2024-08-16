@@ -1,4 +1,4 @@
-from fugle_marketdata import WebSocketClient, RestClient
+from fugle_marketdata import WebSocketClient
 import json
 import asyncio
 import os
@@ -11,12 +11,11 @@ class WebSocketHandler:
 
     def handle_message(self, message):
         data = json.loads(message)
-        if data.get("event")=="data":
-            aaa = data.get("data")
-            # print(f"i send sth from ws.{aaa}")
-            self.handle_data_callback(aaa)
-        # print(f"print from we: {data}")
-        # self.handle_data_callback(data)
+        if data.get("event") == "data":
+            asyncio.run_coroutine_threadsafe(self.process_data(data.get("data")), asyncio.get_event_loop())
+
+    async def process_data(self, data):
+        await self.handle_data_callback(data)
              
     def handle_connect(self):
         print('connected')
@@ -28,30 +27,14 @@ class WebSocketHandler:
         print(f'error: {error}')
 
     def start(self):
-        # client = WebSocketClient(api_key=FUGLE_API_KEY)
         stock = self.client.stock
         stock.on("connect", self.handle_connect)
         stock.on("message", self.handle_message)
         stock.on("disconnect", self.handle_disconnect)
         stock.on("error", self.handle_error)
         stock.connect()
-        stock.subscribe({
-            "channel": 'trades',
-            "symbol": '2330',
-        })
-        stock.subscribe({
-            "channel": 'trades',
-            "symbol": '0050',
-        })
-        stock.subscribe({
-            "channel": 'trades',
-            "symbol": '00670L',
-        })
-        stock.subscribe({
-            "channel": 'trades',
-            "symbol": '2454',
-        })
-        stock.subscribe({
-            "channel": 'trades',
-            "symbol": '6115',
-        })
+        stock.subscribe({"channel": 'trades', "symbol": '2330'})
+        stock.subscribe({"channel": 'trades', "symbol": '0050'})
+        stock.subscribe({"channel": 'trades', "symbol": '00670L'})
+        stock.subscribe({"channel": 'trades', "symbol": '2454'})
+        stock.subscribe({"channel": 'trades', "symbol": '6115'})

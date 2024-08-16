@@ -1,46 +1,30 @@
-from confluent_kafka import Consumer, KafkaError
-import time
+import asyncio
+from aiokafka import AIOKafkaConsumer
 import json
 
-kafka_config = {
-    'bootstrap.servers': 'kafka:9092',
-    'group.id': 'per_sec_data_group', 
-    'auto.offset.reset': 'latest',
-    'session.timeout.ms': 30000, 
-    'max.poll.interval.ms': 60000
-}
-
-def create_consumer(topic):
-
-    consumer = Consumer(kafka_config)
-    consumer.subscribe([topic])
-
+async def create_consumer(topic):
+    consumer = AIOKafkaConsumer(
+        topic,
+        bootstrap_servers='kafka:9092',
+        group_id='testing_group',
+        auto_offset_reset='latest',
+        session_timeout_ms=30000,
+        max_poll_interval_ms=60000
+    )
+    await consumer.start()
     print(f'Started consuming from topic: {topic}')
 
     try:
-        while True:
-            msgs = consumer.consume(num_messages=100, timeout=1.0)  # 一次拉取多条消息
-            if not msgs:
-                continue
-
-            for msg in msgs:
-                if msg.error():
-                    if msg.error().code() == KafkaError._PARTITION_EOF:
-                        continue
-                    else:
-                        print(msg.error())
-                        break
-
-                raw = json.loads(msg.value().decode("utf-8"))
-                print(f"print from consumer: got msg {raw}")
-
+        async for msg in consumer:
+            raw = json.loads(msg.value.decode("utf-8"))
+            print(f"print from consumer: got msg {raw}")
     except KeyboardInterrupt:
         pass
     except Exception as e:
         print(f"Error occurred: {e}, retrying...")
-        time.sleep(5) 
+        await asyncio.sleep(5) 
     finally:
-        consumer.close()
+        await consumer.stop()
 
 
 # if __name__ == "__main__":

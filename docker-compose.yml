@@ -23,6 +23,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - kafka_data:/bitnami/kafka
+    # 要考慮不要設定，不然log太多
     deploy:
       resources:
         limits:

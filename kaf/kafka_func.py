@@ -1,7 +1,7 @@
 from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka import KafkaException
 
-def create_kafka_topic(topic_name, num_partitions=1, replication_factor=1):
+def create_kafka_topic(topic_name, num_partitions=1, replication_factor=1, retention_ms=60000):  # 這邊的retention_ms是資料留存時間
     admin_client = AdminClient({'bootstrap.servers': 'kafka:9092'})
     
     try:
@@ -14,7 +14,8 @@ def create_kafka_topic(topic_name, num_partitions=1, replication_factor=1):
         print(f"Failed to list/delete topics: {e}")
 
     # ! 先前分區一直是[0]的根本原因是因為，沒有先刪除掉，並且kafka的機制是，沒辦法在建立的topic上改動partitioon
-    topic = NewTopic(topic_name, num_partitions=num_partitions, replication_factor=replication_factor)
+    topic = NewTopic(topic_name, num_partitions=num_partitions, replication_factor=replication_factor, config={'retention.ms': str(retention_ms)})
+
     try:
         fs = admin_client.create_topics([topic])
         # 下方的好像不必要執行

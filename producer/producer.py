@@ -9,7 +9,7 @@ stock_to_partition = {
     "0050": 1,
     "00670L": 2,
     "2454": 3,
-    "2603": 4
+    "6115": 4
 }
 
 kafka_config = {
@@ -23,11 +23,11 @@ producer = Producer(kafka_config)
 
 msg_deques = {symbol: deque() for symbol in stock_to_partition}
 
-def delivery_report(err, msg):
-    if err is not None:
-        print(f"Message delivery failed: {err}")
-    else:
-        print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
+# def delivery_report(err, msg):
+#     if err is not None:
+#         print(f"Message delivery failed: {err}")
+#     else:
+#         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
 def send_heartbeat(symbol, topic):
     heartbeat_message = {
@@ -41,7 +41,7 @@ def send_heartbeat(symbol, topic):
         "ask": 0.0,
         "volume": 0,
         "isContinuous": False,
-        "time": int(datetime.utcnow().timestamp() * 1000000),  # Unix时间戳，单位为微秒
+        "time": int(datetime.utcnow().timestamp() * 1000000),
         "serial": "heartbeat_serial",
         "id": "heartbeat_id",
         "channel": "heartbeat_channel"
@@ -49,8 +49,8 @@ def send_heartbeat(symbol, topic):
 
     partition = stock_to_partition[symbol]
     json_data = json.dumps(heartbeat_message).encode('utf-8')
-    producer.produce(topic, partition=partition, value=json_data, callback=delivery_report)
-    print(f"Heartbeat sent to topic {topic} for symbol {symbol}")
+    producer.produce(topic, partition=partition, value=json_data)  # , callback=delivery_report
+    # print(f"Heartbeat sent to topic {topic} for symbol {symbol}")
 
 def send_batch_to_kafka(topic):
     for symbol, deque in msg_deques.items():
@@ -59,9 +59,9 @@ def send_batch_to_kafka(topic):
             deque.clear()
             for msg in batch:
                 par = stock_to_partition[symbol]
-                print(f"Symbol: {symbol}, Partition : {par}")
+                # print(f"Symbol: {symbol}, Partition : {par}")
                 json_data = json.dumps(msg).encode('utf-8')
-                producer.produce(topic, partition=par, value=json_data, callback=delivery_report)
+                producer.produce(topic, partition=par, value=json_data) #, callback=delivery_report
         else:
             send_heartbeat(symbol, topic)
 

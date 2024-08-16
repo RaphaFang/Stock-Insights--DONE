@@ -19,7 +19,7 @@ def create_consumer(topic):
 
     try:
         while True:
-            msgs = consumer.consume(num_messages=10, timeout=1.0)  # 一次拉取多条消息
+            msgs = consumer.consume(num_messages=100, timeout=1.0)  # 一次拉取多条消息
             if not msgs:
                 continue
 
@@ -33,24 +33,6 @@ def create_consumer(topic):
 
                 raw = json.loads(msg.value().decode("utf-8"))
                 print(f"print from consumer: got msg {raw}")
-
-
-            # msg = consumer.poll(timeout=1.0) 
-            # if msg is None:
-            #     continue
-            # if msg.error():
-            #     if msg.error().code() == KafkaError._PARTITION_EOF:
-            #         continue
-            #     else:
-            #         print(msg.error())
-            #         break
-
-            # for m in msg:
-            #     raw = json.loads(m.value().decode("utf-8"))
-            #     print(f"Received message: {raw}")
-
-            # raw =  json.loads(msg.value().decode("utf-8"))
-            # print(f"print from consumer: got msg {raw}")
 
     except KeyboardInterrupt:
         pass

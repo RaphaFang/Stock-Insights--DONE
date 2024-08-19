@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Booking</title>
+
+    <link rel="stylesheet" href="/tdt/v1/static/css_js_folder/css/attraction_style.css" />
+    <link rel="stylesheet" href="/tdt/v1/static/css_js_folder/css/signin_signout_section.css" />
+    <link rel="stylesheet" href="/tdt/v1/static/css_js_folder/css/booking_style.css" />
+
+    <script src="/tdt/v1/static/css_js_folder/js/pre_job.js" defer></script>
+    <!-- <script src="/static/css_js_folder/js/signin_signout_section.js" defer></script> -->
+    <script src="/tdt/v1/static/css_js_folder/js/signin_signout_section_TESTING.js" defer></script>
+    <script src="/tdt/v1/static/css_js_folder/js/before_booking.js" defer></script>
+    <script src="/tdt/v1/static/css_js_folder/js/booking_after.js" defer></script>
+    <script src="/tdt/v1/static/css_js_folder/js/booking_payment.js" defer></script>
+    <script src="https://js.tappaysdk.com/sdk/tpdirect/v5.14.0"></script>
+    <script src="/tdt/v1/static/css_js_folder/js/history_order_before.js" defer></script>
+
+    <script>
+      TPDirect.setupSDK(151765, "app_Y4hb79I5fnESKnvdTwR6JwQoI2ZbdwZVG23EBI8L4VVuyWwERolfviHOdzpm", "sandbox");
+    </script>
+  </head>
+  <body>
+    <div class="content">
+      <div id="overlay" hidden onclick="cancelFormDisplay()"></div>
+      <div class="nav-bar">
+        <div class="second-nav-bar">
+          <p class="title" id="title">Taipei Day Trip</p>
+          <div class="btn-container">
+            <div class="firstbtn">
+              <a class="first-bar-btn" id="bookingGet" onclick="stateCheckBeforeBooking()">Booking</a>
+            </div>
+            <div class="firstbtn">
+              <a class="first-bar-btn" id="bookingGetAll" onclick="redirectBookingHistory()">Orders</a>
+            </div>
+            <div class="secondbtn" id="secondbtn">
+              <a class="second-bar-btn" id="login-btn" onclick=" displaySignIn()"></a>
+              <a class="second-bar-btn" id="logout-btn" onclick="userSignOut()" hidden></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="without-nav-bar">
+        <!-- ! first -->
+        <div class="discribe-block-div">
+          <div class="describe-block describe-block-c1" id="describe-block">
+            <div class="wel-booking">
+              <p class="wel-booking-p" id="wel-booking-p">Hello, &nbsp;&nbsp;&nbsp;&nbsp, the itinerary to be booked is as follows:</p>
+            </div>
+            <div hidden id="prevent-null">
+              <p class="prevent-null-p" id="prevent-null-p"></p>
+            </div>
+            <div hidden class="first-block" id="first-block">
+              <div class="book-pic-div" id="book-info-div-pic"></div>
+              <div class="book-info" id="book-info-div">
+                <p class="book-info-title">Taipei Day Trip</p>
+                <p class="book-info-text"><span class="custom-bold">Date:</span></p>
+                <p class="book-info-text"><span class="custom-bold">Time:</span></p>
+                <p class="book-info-text"><span class="custom-bold">Cost:</span></p>
+                <p class="book-info-text"><span class="custom-bold">Location:</span></p>
+              </div>
+              <div class="delete-pic-div">
+                <img class="delete-pic" src="/tdt/v1/static/css_js_folder/pic/delete.png" alt="delete-pic" onclick="bookingDelete()" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="type-1-footer"></div>
+
+        <div hidden id="detect-display">
+          <div class="divider-div">
+            <div class="divider"></div>
+          </div>
+          <!-- ! second -->
+          <div class="discribe-block-div">
+            <div class="describe-block describe-block-c1" id="describe-block">
+              <div class="second-block-input-div">
+                <p class="second-block-input-title">Your contact information</p>
+                <div class="info-div-for-booking">
+                  <label class="book-personal-label">Name:</label>
+                  <input class="book-personal-info-place" id="book-personal-info-place-name" type="text" placeholder="Yakko" />
+                </div>
+                <div class="info-div-for-booking">
+                  <label class="book-personal-label">Email:</label>
+                  <input class="book-personal-info-place" id="book-personal-info-place-email" type="email" placeholder="wehelp@pada-x.com" />
+                </div>
+                <div class="info-div-for-booking">
+                  <label class="book-personal-label">Phone:</label>
+                  <input class="book-personal-info-place" id="book-personal-info-place-tel" type="tel" placeholder="" />
+                </div>
+                <div class="second-last-text">
+                  <p class="second-last-text-p">
+                    Please keep your mobile phone accessible and arrive on time.<br />The tour guide will contact you by mobile phone, so please make
+                    sure to provide the correct contact information.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="divider-div">
+            <div class="divider"></div>
+          </div>
+          <!-- ! third -->
+
+          <div class="discribe-block-div">
+            <div class="describe-block describe-block-c1" id="describe-block">
+              <form id="card-form">
+                <div class="third-block-input-div">
+                  <p class="second-block-input-title">Credit card payment</p>
+                  <style>
+                    .tpfield {
+                      height: 38px;
+                      width: 200px;
+                      border: 1px solid rgba(204, 204, 204, 1);
+                      border-radius: 5px;
+                      margin: 5px 0;
+                      padding-left: 15px;
+                    }
+                  </style>
+                  <div class="info-div-for-booking">
+                    <label class="book-personal-label">Number :</label>
+                    <div class="tpfield" id="card-number"></div>
+                  </div>
+                  <div class="info-div-for-booking">
+                    <label class="book-personal-label">Expire :</label>
+                    <div class="tpfield" id="card-expiration-date"></div>
+                  </div>
+                  <div class="info-div-for-booking">
+                    <label class="book-personal-label">CCV :</label>
+                    <div class="tpfield" id="card-ccv"></div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="divider-div">
+            <div class="divider"></div>
+          </div>
+          <div class="discribe-block-div">
+            <div class="final-div">
+              <p id="finalPrice">Total price : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; NTD</p>
+              <button id="submit-button" type="button" disabled>Confirm and pay</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ! footer part -->
+    <div id="type-2-footer"></div>
+  </body>
+</html>

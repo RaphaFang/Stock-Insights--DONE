@@ -1,0 +1,184 @@
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 1);
+  z-index: 1000;
+  opacity: 25%;
+}
+.signup-form-div,
+.signin-form-div {
+  width: 340px;
+  min-height: 275px;
+  height: auto;
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  background-color: rgba(255, 255, 255, 1);
+  padding: 25px 15px 15px 15px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 60px 0px rgba(170, 170, 170, 1);
+}
+.signup-form-div {
+  min-height: 332px;
+  height: auto;
+}
+.signup-form-div:before,
+.signin-form-div:before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(270deg, #337788 0%, #66aabb 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 10px 10px 0 0;
+}
+.log-img-button {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.log-img-button img {
+  width: 16px;
+  height: 16px;
+}
+.form-text {
+  font-family: Noto Sans TC;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+  width: 310px;
+  height: 27px;
+  margin-top: 0px;
+  color: rgba(102, 102, 102, 1);
+}
+.form-group {
+  width: 310px;
+  height: 47px;
+  margin-top: 10px;
+}
+.form-group:first-of-type {
+  margin-top: 15px;
+}
+.form-group input {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(204, 204, 204, 1);
+  border-radius: 5px;
+  padding: 15px;
+}
+
+.form-group input::placeholder {
+  color: rgba(117, 117, 117, 1);
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 13.3px;
+  text-align: left;
+}
+.form-group input:focus {
+  outline: none;
+  border: 1px solid rgba(204, 204, 204, 1);
+}
+
+.form-group-last button {
+  width: 100%;
+  height: 47px;
+  margin-top: 10px;
+
+  border-radius: 5px;
+  background-color: rgba(68, 136, 153, 1);
+  border: 0;
+  color: white;
+
+  cursor: pointer;
+
+  font-family: Noto Sans TC;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 16px;
+  text-align: center;
+}
+.error-catcher,
+.switch-form {
+  height: 22px;
+  margin-top: 15px;
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 13.3px;
+  text-align: center;
+  color: rgba(102, 102, 102, 1);
+}
+#switch-form a,
+#forget-password a {
+  font-size: 16px;
+  color: rgba(102, 102, 102, 1);
+  text-decoration: none;
+}
+
+.error-catcher {
+  margin-bottom: 10px;
+}
+
+[hidden] {
+  display: none;
+}
+/* 
+.signin-form-div {
+  max-height: 500px;
+  height: auto;
+} */
+/* .forget-password a {
+  margin-top: 10px;
+} */
+
+.fieldin-email-p {
+  height: 22px;
+  margin-top: 15px;
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 13.3px;
+  text-align: center;
+  color: rgba(102, 102, 102, 1);
+}
+
+.submit-password-form {
+  height: 200px;
+  width: 340px;
+  min-height: 275px;
+  height: auto;
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  background-color: rgba(255, 255, 255, 1);
+  padding: 25px 15px 15px 15px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 60px 0px rgba(170, 170, 170, 1);
+}
+
+.submit-password-form:before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(270deg, #337788 0%, #66aabb 100%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 10px 10px 0 0;
+}

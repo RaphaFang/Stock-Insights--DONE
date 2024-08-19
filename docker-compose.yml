@@ -1,0 +1,37 @@
+version: "3.8"
+services:
+  app:
+    container_name: fastapi-app
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - SQL_USER=${SQL_USER}
+      - SQL_PASSWORD=${SQL_PASSWORD}
+      - PRIVATE_KEY_PATH=/app/secrets/private_key.pem
+      - PUBLIC_KEY_PATH=/app/secrets/public_key.pem
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - TAP_PARTNER_KEY=${TAP_PARTNER_KEY}
+      - MERCHANT_ID=${MERCHANT_ID}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_SESSION_SECRET_KEY=${GOOGLE_SESSION_SECRET_KEY}
+      - PERSONAL_GMAIL=${PERSONAL_GMAIL}
+      - PERSONAL_GMAIL_PASSWORD=${PERSONAL_GMAIL_PASSWORD}
+
+    volumes:
+      - /home/ubuntu/WH/tdt/secrets:/app/secrets
+    # depends_on:
+    #   - redis
+    restart: always
+    networks:
+      - kafka-net
+
+  # redis:
+  #   image: redis:alpine
+  #   ports:
+  #     - "6379:6379"
+  #   environment:
+  #     - REDIS_PASSWORD=${REDIS_PASSWORD}
+  #   command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+  #   restart: always

@@ -1,0 +1,76 @@
+body {
+  font-family: "Inter", sans-serif;
+  color: #343a40;
+  color: (102, 102, 102, 1);
+}
+.result-display-ddiv {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.result-display {
+  margin: 30px 0;
+  max-width: 340px;
+  width: 100%;
+  /* border: 1px solid black; */
+  box-shadow: 0px 20px 30px 0 rgba(0, 0, 0, 0.1);
+  /* 左右、上下、模糊、半徑 */
+  border-radius: 12px;
+}
+.att-img {
+  max-width: 340px;
+  width: auto;
+  border-radius: 12px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.contain-inf {
+  padding: 28px;
+}
+.sstate {
+  font-size: 16px;
+}
+.sstate-c {
+  font-size: 16px;
+  color: rgba(68, 136, 153, 1);
+}
+/* !----------------- */
+.sstate-type2 {
+  font-size: 16px;
+  color: red;
+}
+.sstate-2 {
+  font-size: 16px;
+  margin-top: 20px;
+}
+/*     
+ */
+.divider {
+  min-width: 276px;
+  margin: 0;
+}
+.ttitle {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 25px;
+}
+.thenumber-div {
+  display: flex;
+  justify-content: center;
+}
+.thenumber {
+  font-size: 24px;
+  margin: 25px 10px 40px 10px;
+}
+.theattr-div {
+  margin: 15px 0;
+}
+.theattr-p {
+  font-size: 16px;
+  color: (102, 102, 102, 1);
+}
+.final-part-p {
+  font-size: 16px;
+  color: (102, 102, 102, 1);
+  margin-top: 40px;
+}

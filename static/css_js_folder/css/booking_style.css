@@ -1,0 +1,391 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-size: 20px;
+  font-family: "Noto Sans TC";
+}
+.custom-bold {
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 13.3px;
+  text-align: left;
+}
+.describe-block-c1 {
+  justify-content: space-around;
+  align-items: center;
+  width: 1000px;
+}
+.describe-block,
+.describe-block-c1 {
+  height: auto;
+  min-height: 0;
+}
+
+.wel-booking {
+  height: 27px;
+  max-width: 1000px;
+  width: auto;
+  font-family: Noto Sans TC;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: left;
+  color: rgba(102, 102, 102, 1);
+  margin-bottom: 30px;
+}
+.prevent-null-p {
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 13.3px;
+  text-align: left;
+  color: rgba(102, 102, 102, 1);
+  height: 24px;
+}
+.first-block {
+  height: 200px;
+  max-width: 980px;
+  width: 100%;
+  display: flex;
+  margin: 0 auto;
+  position: relative;
+}
+.delete-pic {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 30px;
+  width: 30px;
+  cursor: pointer;
+}
+.book-pic-div {
+  width: 250px;
+  height: 200px;
+}
+.booking-pic {
+  width: 250px;
+  height: 200px;
+}
+.book-info {
+  max-width: 700px;
+  width: 100%;
+  height: 170px;
+  right: 0;
+  margin: 0 0 30px 30px;
+}
+
+.book-info-title {
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 13.3px;
+  text-align: left;
+  color: rgba(68, 136, 153, 1);
+  margin-bottom: 20px;
+  height: 24px;
+}
+.book-info-text {
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 13.3px;
+  text-align: left;
+  color: rgba(102, 102, 102, 1);
+  margin-bottom: 10px;
+  height: 24px;
+}
+
+.second-block {
+  height: 227px;
+  max-width: 980px;
+  width: 100%;
+}
+.second-block-title {
+  font-family: Noto Sans TC;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: left;
+  color: rgba(102, 102, 102, 1);
+}
+.second-block-input-div {
+  height: 227px;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.second-block-input-title {
+  height: 24px;
+  margin-bottom: 20px;
+  font-family: Noto Sans TC;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: left;
+  color: rgba(102, 102, 102, 1);
+  width: 980px;
+}
+
+.info-div-for-booking {
+  height: 38px;
+  margin-bottom: 15px;
+  display: flex;
+
+  align-items: center;
+}
+.tpfield,
+.book-personal-info-place {
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 13.3px;
+  text-align: left;
+  color: rgba(102, 102, 102, 1);
+}
+.info-div-for-booking input {
+  width: 200px;
+  height: 38px;
+  box-sizing: border-box;
+  border: 1px solid rgba(204, 204, 204, 1);
+  border-radius: 5px;
+  padding: 15px;
+}
+.book-personal-label {
+  color: rgba(102, 102, 102, 1);
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 13.3px;
+  text-align: left;
+  width: 81px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+.second-last-text {
+  height: 24px;
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 13.3px;
+  text-align: left;
+  color: rgba(102, 102, 102, 1);
+  display: flex;
+  align-items: center;
+  top: 5px;
+}
+.second-last-text p {
+  font-size: 16px;
+  font-weight: 700;
+  /* line-height: 13.3px; */
+}
+.third-block-input-div {
+  height: 188px;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.info-div-for-booking:last-child {
+  margin-bottom: 0;
+}
+
+.final-div {
+  width: 980px;
+  height: 100px;
+  margin: 40px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+}
+
+.final-div p {
+  width: 174px;
+  height: 20px;
+  margin-bottom: 22px;
+
+  font-family: Noto Sans TC;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 13.3px;
+  text-align: right;
+  color: rgba(102, 102, 102, 1);
+}
+.final-div button {
+  width: 173px;
+  height: 36px;
+
+  border-radius: 5px;
+  background-color: rgba(68, 136, 153, 1);
+  border: 0;
+  color: white;
+
+  cursor: pointer;
+
+  font-family: Noto Sans TC;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 16px;
+  text-align: center;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.content {
+  min-height: 161px;
+}
+
+.foot {
+  background: rgba(117, 117, 117, 1);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  height: calc(100vh - 161px);
+  padding-top: 40px;
+}
+.second-block-input-title,
+.describe-block,
+.describe-block-c1 {
+  max-width: 980px;
+  width: 100%;
+}
+
+.foot-v2 {
+  height: 104px;
+}
+
+@media (max-width: 900px) {
+  .final-div {
+    padding-right: 10px;
+  }
+}
+
+@media (max-width: 630px) {
+  .second-last-text {
+    height: 48px;
+  }
+  .second-last-text-p {
+    font-family: Noto Sans TC;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 23.17px;
+    text-align: left;
+  }
+}
+@media (max-width: 550px) {
+  .book-info-text:last-child {
+    margin: 0; /* 设置最后一个成员的margin为0 */
+  }
+  .book-info {
+    min-width: 340px;
+    width: auto;
+  }
+  .first-block {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+  .booking-pic,
+  .book-pic-div {
+    height: 200px;
+    /* max-width: 340px; */
+    width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .book-info {
+    padding: 0;
+    margin: 0;
+    height: 170px;
+    min-width: 340px;
+    width: 100%;
+  }
+  .book-pic-div,
+  .booking-pic {
+    height: 200px;
+    min-width: 340px;
+    width: 100%;
+  }
+
+  .book-pic-div {
+    height: 200px; /* 固定高度 */
+    width: 100%; /* 父容器宽度 */
+    overflow: hidden; /* 隐藏超出部分 */
+  }
+
+  .booking-pic {
+    height: 100%; /* 图片高度自适应父容器 */
+    width: auto; /* 宽度保持比例 */
+    object-fit: cover; /* 保持比例，并覆盖容器 */
+    background-position: center center;
+    background-size: cover;
+  }
+
+  .delete-pic-div {
+    position: relative;
+    padding-bottom: 30px;
+  }
+  .delete-pic {
+    position: absolute;
+    right: 0;
+    bottom: 30px;
+    height: 30px;
+    width: 30px;
+    cursor: pointer;
+  }
+
+  .describe-block,
+  .describe-block-c1 {
+    padding: 0;
+    margin: 40px 10px 30px 10px;
+  }
+  .book-info {
+    margin-top: 30px;
+  }
+}
+
+[hidden] {
+  display: none;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.content {
+  min-height: 161px;
+}
+
+.foot {
+  background: rgba(117, 117, 117, 1);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  height: calc(100vh - 161px);
+  padding-top: 40px;
+}
+.second-block-input-title,
+.describe-block,
+.describe-block-c1 {
+  max-width: 980px;
+  width: 100%;
+}
+
+.foot-v2 {
+  height: 104px;
+}

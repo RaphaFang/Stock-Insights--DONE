@@ -1,0 +1,42 @@
+.without-nav-bar {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.result-display-ddiv {
+  justify-content: flex-start;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+  box-sizing: border-box;
+}
+
+.result-display-ddiv::-webkit-scrollbar {
+  display: none;
+}
+.result-display {
+  height: 792px;
+  flex-wrap: nowrap;
+  margin: 30px 15px;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+.final-part {
+  position: absolute;
+  top: 710px;
+}
+.result-display-ddiv > :first-child {
+  margin-left: 30px;
+}
+.result-display-ddiv > :last-child {
+  margin-right: 30px;
+}
+.att-img {
+  min-height: 255px;
+}

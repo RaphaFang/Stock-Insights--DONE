@@ -1,28 +1,50 @@
 from fastapi import APIRouter, WebSocket
 from fastapi.responses import JSONResponse
 import asyncio
-from kafka import KafkaConsumer
+# from kafka import KafkaConsumer
+from aiokafka import AIOKafkaConsumer
 
 router = APIRouter()
 queue = asyncio.Queue()
 headers = {"Content-Type": "application/json; charset=utf-8"}
 
-def kafka_consumer_loop(topic_name):
-    consumer = KafkaConsumer(
+# async def kafka_consumer_loop(topic_name):
+#     consumer = KafkaConsumer(
+#         topic_name,
+#         bootstrap_servers=['kafka:9092'],
+#         group_id='ws_group',
+#         auto_offset_reset='earliest'
+#     )
+#     for message in consumer:
+#         await queue.put(message.value.decode('utf-8'))
+
+
+
+async def kafka_consumer_loop(topic_name):
+    consumer = AIOKafkaConsumer(
         topic_name,
-        bootstrap_servers=['kafka-container:9092'],
+        bootstrap_servers='kafka:9092',
         group_id='ws_group',
-        auto_offset_reset='earliest'
+        auto_offset_reset='earliest',
+        loop=asyncio.get_event_loop()
     )
-    for message in consumer:
-        asyncio.run_coroutine_threadsafe(queue.put(message.value.decode('utf-8')), asyncio.get_event_loop())
+    await consumer.start()
+    try:
+        async for message in consumer:
+            await queue.put(message.value.decode('utf-8'))
+    finally:
+        await consumer.stop()
+
 
 @router.websocket("/ws/data")
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
     while True:
+        # data = "Hello WebSocket"  # Placeholder data
+        # await ws.send_text(data)
         data = await queue.get()
-        await ws.send_text(data)
+        if data:
+            await ws.send_text(data)
 
 
     # try:

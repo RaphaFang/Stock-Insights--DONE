@@ -1,25 +1,28 @@
 from fastapi import *
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from routers import api_ws_connect
-from utils.cors import setup_cors 
-from utils.auth_middleware import AuthMiddleware 
-from utils.db.sql import  build_async_sql_pool
-from utils.db.redis import  build_async_redis_pool
+from routers import websocket_connect
 from starlette.middleware.sessions import SessionMiddleware
 import os
-from utils.ttl import handle_expired_keys
 import asyncio
+from routers.websocket_connect import kafka_consumer_loop
 
 app = FastAPI(
     docs_url="/stock/v1/docs",
     openapi_url="/stock/v1/openapi.json"
 )
-app.mount("/stock/v1/static", StaticFiles(directory='static'), name="static")
-app.add_middleware(AuthMiddleware)
-setup_cors(app)
+# app.mount("/stock/v1/static", StaticFiles(directory='static'), name="static")
+# app.add_middleware(AuthMiddleware)
+# setup_cors(app)
 
 # !-----------------------------------------
+@app.on_event("startup")
+async def startup_event():
+    # loop = asyncio.get_event_loop()
+    # loop.create_task(kafka_consumer_loop("kafka_per_sec_data"))
+    asyncio.create_task(kafka_consumer_loop("kafka_per_sec_data"))
+
+
 # @app.on_event("startup")
 # async def startup_event():
 #     app.state.async_sql_pool = await build_async_sql_pool()
@@ -46,7 +49,7 @@ setup_cors(app)
 # app.add_middleware(SessionMiddleware, secret_key=GOOGLE_SESSION_SECRET_KEY, same_site="lax", https_only=False)
 
 # !-----------------------------------------
-app.include_router(api_ws_connect.router, tags=["websocket"], prefix="/stock/v1")
+app.include_router(websocket_connect.router, tags=["websocket"], prefix="/stock/v1")
 # app.include_router(api_attraction.router, tags=["attraction"], prefix="/tdt/v1")
 # app.include_router(api_attractions.router, tags=["attraction"], prefix="/tdt/v1")
 
@@ -70,11 +73,11 @@ app.include_router(api_ws_connect.router, tags=["websocket"], prefix="/stock/v1"
 
 
 # !-----------------------------------------
-# html_router = APIRouter(prefix="/tdt/v1")
+html_router = APIRouter(prefix="/stock/v1")
 
-# @html_router.get("/", include_in_schema=False)
-# async def index(request: Request):
-# 	return FileResponse("./static/index.html", media_type="text/html")
+@html_router.get("/", include_in_schema=False)
+async def index(request: Request):
+	return FileResponse("./static/index.html", media_type="text/html")
 # @html_router.get("/attraction/{id}", include_in_schema=False)
 # async def api_attraction(request: Request, id: int):
 # 	return FileResponse("./static/attraction.html", media_type="text/html")
@@ -88,4 +91,4 @@ app.include_router(api_ws_connect.router, tags=["websocket"], prefix="/stock/v1"
 # async def history_orders(request: Request):
 # 	return FileResponse("./static/history_orders.html", media_type="text/html")
 
-# app.include_router(html_router)
+app.include_router(html_router)

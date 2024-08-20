@@ -1,11 +1,28 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.window import Window
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, BooleanType, TimestampType
 from pyspark.sql.functions import from_json, col, window, sum as spark_sum, count as spark_count,avg, last, lit, to_timestamp, current_timestamp
 from pyspark.sql.functions import current_timestamp, window, when, lit, coalesce
-from pyspark.sql import Row
-from datetime import datetime
 from pyspark.sql import functions as SF
+from kafka import KafkaProducer
+import json
 
+# 不能把producer放在全域，好像是spark才會有的問題
+# producer = KafkaProducer(
+#     bootstrap_servers='kafka:9092', 
+#     value_serializer=lambda v: json.dumps(v).encode('utf-8')
+# )
+
+# stock_to_partition = {"2330": 0,"0050": 1,"00670L": 2,"2454": 3,"6115": 4}
+
+# def send_partition_to_kafka(partition):
+#     for row in partition:
+#         partition_id = stock_to_partition.get(row['symbol'], 0)
+#         producer.send('kafka_per_sec_data', 
+#                       key=row['symbol'].encode('utf-8'), 
+#                       value=row, 
+#                       partition=partition_id)
+#     producer.flush()
 
 def main():
     schema = StructType([
@@ -39,7 +56,7 @@ def main():
         .option("maxOffsetsPerTrigger", "1000") \
         .option("failOnDataLoss", "false") \
         .load()
-
+    
     def process_batch(df, epoch_id):
         # ! 篩選第一次，一開始完全空的情況
         if df.rdd.isEmpty():
@@ -51,25 +68,29 @@ def main():
             .select("data.*")
 
         # ! 篩選第二次，只有心跳的情況
-
         df = df.withColumn("time", to_timestamp(col("time") / 1000000))
         windowed_df = df.groupBy(
-            window(col("time"), "1 second", "1 second"),
+            SF.window(col("time"), "1 second", "1 second"),
             col("symbol")
         ).agg(
             SF.sum(SF.when(col("type") != "heartbeat", col("price") * col("size")).otherwise(0)).alias("price_time_size"),
             SF.sum(SF.when(col("type") != "heartbeat", col("size")).otherwise(0)).alias("size_per_sec"),
             SF.last(SF.when(col("type") != "heartbeat", col("volume")), ignorenulls=True).alias("volume_till_now"),
             SF.last("time", ignorenulls=True).alias("last_data_time"),
-            SF.count("*").alias("data_count"),
-            SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("check")  
-
+            SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
+            SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
         )
+        # 這會是更有效率的作法，比起在尾部加上orderby 
+        # window_spec = Window.partitionBy("symbol").orderBy("last_data_time")
+        window_spec = Window.partitionBy("symbol").orderBy("window.start")
+        windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec))
+        windowed_df = windowed_df.orderBy("rank")
+
         # 調整欄位名稱，準備輸出
         result_df = windowed_df.withColumn(
             "vwap_price_per_sec", col("price_time_size") / col("size_per_sec")
         ).withColumn(
-            "real_or_filled", SF.when(col("check") > 0, "real").otherwise("filled")
+            "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
         ).select(
             "symbol",
             lit("per_sec_data").alias("type"),
@@ -80,11 +101,11 @@ def main():
             "last_data_time",
             "window.start", 
             "window.end",
-            current_timestamp().alias("current_time"),
-            "data_count",
-            # "last_serial as serial",  # 這個架構好像不支持這樣重新命名的操作
-            # col("last_isClose").alias("isClose"),  # 不然就是要這樣命名
+            SF.current_timestamp().alias("current_time"),
+            "real_data_count",
+            "filled_data_count"
         )
+        # result_df.foreachPartition(send_partition_to_kafka)
 
         result_df.selectExpr(
             "CAST(symbol AS STRING) AS key",

@@ -46,6 +46,7 @@ services:
     working_dir: /opt/spark-apps
     command: >
       bash -c "
+      pip install kafka-python &&
       mkdir -p /opt/bitnami/spark/.ivy2/local &&
       spark-submit
       --conf spark.sql.session.timeZone=Asia/Taipei

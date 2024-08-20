@@ -34,7 +34,7 @@ services:
 
   app:
     build: .
-    container_name: app
+    container_name: kafka-app
     env_file:
       - .env
     ports:

@@ -20,11 +20,10 @@ RUN wget https://repo1.maven.org/maven2/org/apache/spark/spark-streaming-kafka-0
 
 COPY . .
 
-# COPY wait.sh /wait.sh
-# RUN chmod +x /wait.sh
-
 EXPOSE 8000
 
 CMD ["spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2", "main.py"]
 
+# COPY wait.sh /wait.sh
+# RUN chmod +x /wait.sh
 # "/wait.sh",

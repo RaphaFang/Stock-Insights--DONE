@@ -1,5 +1,6 @@
 from confluent_kafka import Consumer, Producer, KafkaError
 import json
+import threading
 
 stock_to_partition = {
     "2330": 0,
@@ -10,39 +11,43 @@ stock_to_partition = {
 }
 consumer_config = {
     'bootstrap.servers': 'kafka:9092',
-    'group.id': 'kafka_per_sec_data_group',
+    'group.id': 'send_group',
     'auto.offset.reset': 'earliest',
 }
 producer_config = {
     'bootstrap.servers': 'kafka:9092',
+    'acks': 'all', 
 }
-consumer = Consumer(consumer_config)
-producer = Producer(producer_config)
-consumer.subscribe(['kafka_per_sec_data'])
 
-def send_to_partitioned_topic(symbol, message):
-    par = stock_to_partition.get(symbol, 0)
-    producer.produce('kafka_per_sec_data_partition', value=json.dumps(message), partition=par)
-    producer.flush()
+# def send_to_partitioned_topic(symbol, message):
+
+consumer = Consumer(consumer_config)
+consumer.subscribe(['kafka_per_sec_data'])
+producer = Producer(producer_config)
 
 def kafka_per_sec_data_producer():
-    try:
-        while True:
-            msg = consumer.poll(timeout=1.0)
-            if msg is None:
-                continue
-            if msg.error():
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    continue
-                else:
-                    print(msg.error())
-                    break
-            
-            raw_message = json.loads(msg.value().decode('utf-8'))
-            symbol = raw_message.get('symbol')
-            send_to_partitioned_topic(symbol, raw_message)
+    msg = consumer.poll(timeout=1.0)
+    if msg:
+        if msg.error():
+            if msg.error().code() == KafkaError._PARTITION_EOF:
+                pass
+            else:
+                print(msg.error())
 
-    except KeyboardInterrupt:
-        pass
-    finally:
-        consumer.close()
+        raw_message = json.loads(msg.value().decode('utf-8'))
+        symbol = raw_message.get('symbol')
+        par = stock_to_partition.get(symbol, 0)
+                
+        producer.produce('kafka_per_sec_data_partition', value=json.dumps(raw_message).encode('utf-8'), partition=par)
+        producer.poll(0)
+            # producer.flush()
+    else:
+        print("nothing at `kafka_per_sec_data`, nothing to send to kafka_per_sec_data_partition")
+        
+    producer.flush()
+    threading.Timer(1.0, kafka_per_sec_data_producer).start()
+                
+    # except KeyboardInterrupt:
+    #     pass
+    # finally:
+    #     consumer.close()

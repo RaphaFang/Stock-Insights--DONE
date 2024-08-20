@@ -22,7 +22,7 @@ def create_consumer_by_partition(topic, partition=None):
 
     try:
         while True:
-            msgs = consumer.consume(num_messages=100, timeout=1.0)  
+            msgs = consumer.consume(num_messages=1, timeout=1.0)  
             if not msgs:
                 continue
             for msg in msgs:

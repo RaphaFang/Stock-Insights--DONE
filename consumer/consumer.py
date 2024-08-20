@@ -11,10 +11,8 @@ kafka_config = {
 }
 
 def create_consumer(topic):
-
     consumer = Consumer(kafka_config)
     consumer.subscribe([topic])
-
     print(f'Started consuming from topic: {topic}')
 
     try:

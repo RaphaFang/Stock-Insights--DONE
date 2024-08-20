@@ -11,7 +11,6 @@ stock_to_partition = {
     "2454": 3,
     "6115": 4
 }
-
 kafka_config = {
     'bootstrap.servers': 'kafka:9092',
     'acks': 'all', 
@@ -46,11 +45,9 @@ def send_heartbeat(symbol, topic):
         "id": "heartbeat_id",
         "channel": "heartbeat_channel"
     }
-
     partition = stock_to_partition[symbol]
     json_data = json.dumps(heartbeat_message).encode('utf-8')
     producer.produce(topic, partition=partition, value=json_data)  # , callback=delivery_report
-    # print(f"Heartbeat sent to topic {topic} for symbol {symbol}")
 
 def send_batch_to_kafka(topic):
     for symbol, deque in msg_deques.items():
@@ -59,7 +56,6 @@ def send_batch_to_kafka(topic):
             deque.clear()
             for msg in batch:
                 par = stock_to_partition[symbol]
-                # print(f"Symbol: {symbol}, Partition : {par}")
                 json_data = json.dumps(msg).encode('utf-8')
                 producer.produce(topic, partition=par, value=json_data) #, callback=delivery_report
         else:

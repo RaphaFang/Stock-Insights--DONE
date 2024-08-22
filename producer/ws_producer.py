@@ -3,6 +3,7 @@ import threading
 import json
 from collections import deque
 from datetime import datetime
+import time
 
 stock_to_partition = {
     "2330": 0,
@@ -22,34 +23,33 @@ producer = Producer(kafka_config)
 
 msg_deques = {symbol: deque() for symbol in stock_to_partition}
 
-# def delivery_report(err, msg):
-#     if err is not None:
-#         print(f"Message delivery failed: {err}")
-#     else:
-#         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
+def generate_heartbeat_data():
+    start = time.time()
+    for symbol in stock_to_partition.keys():
+        data = {
+            "symbol": symbol,
+            "type": "heartbeat",
+            "exchange": None,
+            "market": None,
+            "price": 0.0,
+            "size": 0,
+            "bid": 0.0,
+            "ask": 0.0,
+            "volume": 0,
+            "isContinuous": False,
+            "time": int(datetime.utcnow().timestamp() * 1000000),  
+            "serial": "heartbeat_serial",
+            "id": "heartbeat_id",
+            "channel": "heartbeat_channel"
+        }
+        msg_deques[symbol].append(data)
 
-def send_heartbeat(symbol, topic):
-    heartbeat_message = {
-        "symbol": symbol,
-        "type": "heartbeat",
-        "exchange": None,
-        "market": None,
-        "price": 0.0,
-        "size": 0,
-        "bid": 0.0,
-        "ask": 0.0,
-        "volume": 0,
-        "isContinuous": False,
-        "time": int(datetime.utcnow().timestamp() * 1000000),
-        "serial": "heartbeat_serial",
-        "id": "heartbeat_id",
-        "channel": "heartbeat_channel"
-    }
-    partition = stock_to_partition[symbol]
-    json_data = json.dumps(heartbeat_message).encode('utf-8')
-    producer.produce(topic, partition=partition, value=json_data)  # , callback=delivery_report
+    next = start + 1 - 0.00511
+    sleep_time = max(0, next - time.time())
+    threading.Timer(sleep_time, generate_heartbeat_data).start()
 
 def send_batch_to_kafka(topic):
+    start = time.time()
     for symbol, deque in msg_deques.items():
         if deque:
             batch = list(deque)
@@ -58,18 +58,23 @@ def send_batch_to_kafka(topic):
                 par = stock_to_partition[symbol]
                 json_data = json.dumps(msg).encode('utf-8')
                 producer.produce(topic, partition=par, value=json_data) #, callback=delivery_report
-        else:
-            send_heartbeat(symbol, topic)
 
     producer.poll(0)
     producer.flush()
-    threading.Timer(1.0, send_batch_to_kafka, [topic]).start()
+    next = start + 1
+    sleep_time = max(0, next - time.time())
+    threading.Timer(sleep_time, send_batch_to_kafka, [topic]).start()
 
 def add_to_batch(data):
     symbol = data.get("symbol")
     if symbol in msg_deques:
         msg_deques[symbol].append(data)
 
+# def delivery_report(err, msg):
+#     if err is not None:
+#         print(f"Message delivery failed: {err}")
+#     else:
+#         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
 
 # ------------------------------------------------------------

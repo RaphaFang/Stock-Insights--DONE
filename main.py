@@ -1,7 +1,7 @@
 from ws_stock.websocket_handler import WebSocketHandler
 from kaf.kafka_topic_create import create_kafka_topic
 
-from producer.ws_producer import send_batch_to_kafka, add_to_batch
+from producer.ws_producer import send_batch_to_kafka, add_to_batch, generate_heartbeat_data
 from producer.per_sec_data_producer import kafka_per_sec_data_producer
 
 from consumer.consumer import create_consumer
@@ -9,17 +9,19 @@ from consumer.consumer_by_partition import create_consumer_by_partition
 
 import threading
 
-
 def main():
     create_kafka_topic('kafka_raw_data', num_partitions=5)
     create_kafka_topic('kafka_per_sec_data', num_partitions=1)
     create_kafka_topic('kafka_per_sec_data_partition', num_partitions=5)
-    create_kafka_topic('kafka_processed_data', num_partitions=5)
+    create_kafka_topic('kafka_MA_data', num_partitions=1)
+
+    generate_heartbeat_data()
 
     # 第1站，ws送資料到kafka_raw_data
     ws_handler = WebSocketHandler(handle_data_callback=add_to_batch)
     ws_handler.start()
     send_batch_to_kafka('kafka_raw_data')
+
 
     # 第2站，kafka_raw_data資料收到，送到kafka_per_sec_data
     # spark 資料已經處理好了
@@ -39,7 +41,11 @@ def main():
     # 測試區
     # create_consumer('kafka_per_sec_data')
     # create_consumer('kafka_per_sec_data_partition')
-    create_consumer_by_partition('kafka_per_sec_data_partition', partition=0)
+    create_consumer_by_partition('kafka_MA_data')
+    # create_consumer_by_partition('kafka_per_sec_data_partition', partition=0)
+
+
+
 
 if __name__ == "__main__":
     main()

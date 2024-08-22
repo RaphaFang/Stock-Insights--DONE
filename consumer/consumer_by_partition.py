@@ -22,7 +22,7 @@ def create_consumer_by_partition(topic, partition=None):
 
     try:
         while True:
-            msgs = consumer.consume(num_messages=1, timeout=1.0)  
+            msgs = consumer.consume(num_messages=10, timeout=1.0)  
             if not msgs:
                 continue
             for msg in msgs:
@@ -34,7 +34,8 @@ def create_consumer_by_partition(topic, partition=None):
                         break
 
                 raw = json.loads(msg.value().decode("utf-8"))
-                print(f"print from consumer: got msg {raw}")
+                if raw.get("symbol")=="2330":
+                    print(f"print from consumer: got msg {raw}")
 
     except KeyboardInterrupt:
         pass

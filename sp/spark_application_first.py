@@ -43,82 +43,78 @@ def main():
     ])
 
     spark = SparkSession.builder \
-        .appName("spark_app_first") \
+        .appName("spark_per_sec_data") \
         .config("spark.executor.cores", "2") \
         .config("spark.cores.max", "2") \
         .getOrCreate()
-        # 這個設定可以確保在兩核心的前提下，大多數code可以保持員樣
     kafka_df = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", "kafka:9092") \
         .option("subscribe", "kafka_raw_data") \
-        .option("startingOffsets", "earliest") \
+        .option("startingOffsets", "latest") \
         .option("maxOffsetsPerTrigger", "1000") \
         .option("failOnDataLoss", "false") \
         .load()
     
     def process_batch(df, epoch_id):
-        # ! 篩選第一次，一開始完全空的情況
-        if df.rdd.isEmpty():
-            print(f"!!! Weird thing happens, batch {epoch_id} is empty, skipping processing.")
-            return
+        try:
+            df = df.selectExpr("CAST(value AS STRING) as json_data") \
+                .select(from_json(col("json_data"), schema).alias("data")) \
+                .select("data.*")
 
-        df = df.selectExpr("CAST(value AS STRING) as json_data") \
-            .select(from_json(col("json_data"), schema).alias("data")) \
-            .select("data.*")
+            df = df.withColumn("time", to_timestamp(col("time") / 1000000))
+            windowed_df = df.groupBy(
+                SF.window(col("time"), "1 second", "1 second"),col("symbol")
+            ).agg(
+                SF.sum(SF.when(col("type") != "heartbeat", col("price") * col("size")).otherwise(0)).alias("price_time_size"),
+                SF.sum(SF.when(col("type") != "heartbeat", col("size")).otherwise(0)).alias("size_per_sec"),
+                SF.last(SF.when(col("type") != "heartbeat", col("volume")), ignorenulls=True).alias("volume_till_now"),
+                SF.last("time", ignorenulls=True).alias("last_data_time"),
+                SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
+                SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
+            )
+            # 這會是更有效率的作法，比起在尾部加上orderby 
+            # window_spec = Window.partitionBy("symbol").orderBy("last_data_time")
+            window_spec = Window.partitionBy("symbol").orderBy("window.start")
+            windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
-        # ! 篩選第二次，只有心跳的情況
-        df = df.withColumn("time", to_timestamp(col("time") / 1000000))
-        windowed_df = df.groupBy(
-            SF.window(col("time"), "1 second", "1 second"),
-            col("symbol")
-        ).agg(
-            SF.sum(SF.when(col("type") != "heartbeat", col("price") * col("size")).otherwise(0)).alias("price_time_size"),
-            SF.sum(SF.when(col("type") != "heartbeat", col("size")).otherwise(0)).alias("size_per_sec"),
-            SF.last(SF.when(col("type") != "heartbeat", col("volume")), ignorenulls=True).alias("volume_till_now"),
-            SF.last("time", ignorenulls=True).alias("last_data_time"),
-            SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
-            SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
-        )
-        # 這會是更有效率的作法，比起在尾部加上orderby 
-        # window_spec = Window.partitionBy("symbol").orderBy("last_data_time")
-        window_spec = Window.partitionBy("symbol").orderBy("window.start")
-        windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec))
-        windowed_df = windowed_df.orderBy("rank")
+            # 調整欄位名稱，準備輸出
+            result_df = windowed_df.withColumn(
+                "vwap_price_per_sec",SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec")).otherwise(0)
+            ).withColumn(
+                "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
+            ).select(
+                "symbol",
+                lit("per_sec_data").alias("type"),
+                "real_or_filled",
+                "vwap_price_per_sec",
+                "size_per_sec",
+                "volume_till_now",
+                "last_data_time",
+                "window.start", 
+                "window.end",
+                SF.current_timestamp().alias("current_time"),
+                "real_data_count",
+                "filled_data_count"
+            )
+            # result_df.foreachPartition(send_partition_to_kafka)
 
-        # 調整欄位名稱，準備輸出
-        result_df = windowed_df.withColumn(
-            "vwap_price_per_sec", col("price_time_size") / col("size_per_sec")
-        ).withColumn(
-            "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
-        ).select(
-            "symbol",
-            lit("per_sec_data").alias("type"),
-            "real_or_filled",
-            "vwap_price_per_sec",
-            "size_per_sec",
-            "volume_till_now",
-            "last_data_time",
-            "window.start", 
-            "window.end",
-            SF.current_timestamp().alias("current_time"),
-            "real_data_count",
-            "filled_data_count"
-        )
-        # result_df.foreachPartition(send_partition_to_kafka)
-
-        result_df.selectExpr(
-            "CAST(symbol AS STRING) AS key",
-            "to_json(struct(*)) AS value"
-        ).write \
-            .format("kafka") \
-            .option("kafka.bootstrap.servers", "kafka:9092") \
-            .option("topic", "kafka_per_sec_data") \
-            .save()
+            result_df.selectExpr(
+                "CAST(symbol AS STRING) AS key",
+                "to_json(struct(*)) AS value"
+            ).write \
+                .format("kafka") \
+                .option("kafka.bootstrap.servers", "kafka:9092") \
+                .option("topic", "kafka_per_sec_data") \
+                .save()
+            
+        except Exception as e:
+            print(f"Error processing batch {epoch_id}: {e}")
+ 
             
     query = kafka_df.writeStream \
         .foreachBatch(process_batch) \
-        .option("checkpointLocation", "/app/tmp/spark_checkpoints") \
+        .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
         .start()
         # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了
     query.awaitTermination()

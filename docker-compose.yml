@@ -32,9 +32,9 @@ services:
     networks:
       - kafka-net
 
-  spark-driver:
+  spark-driver-sec:
     image: bitnami/spark:latest
-    container_name: spark-driver
+    container_name: spark-driver-sec
     environment:
       - SPARK_MODE=client
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -44,6 +44,8 @@ services:
       - ./checkpoints:/app/tmp/spark_checkpoints # 添加這行
 
     working_dir: /opt/spark-apps
+    ports:
+      - "4040-4045:4040-4045"
     command: >
       bash -c "
       pip install kafka-python &&
@@ -51,7 +53,7 @@ services:
       spark-submit
       --conf spark.sql.session.timeZone=Asia/Taipei
       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2 
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2 
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
       --master spark://spark-master:7077 
       /opt/spark-apps/spark_application_first.py
       "
@@ -60,6 +62,39 @@ services:
       - spark-worker
     networks:
       - kafka-net
+
+  spark-driver-ma:
+    image: bitnami/spark:latest
+    container_name: spark-driver-ma
+    environment:
+      - SPARK_MODE=client
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    volumes:
+      - ./sp:/opt/spark-apps
+      - ./.ivy2:/opt/bitnami/spark/.ivy2
+      - ./checkpoints:/app/tmp/spark_checkpoints
+
+    working_dir: /opt/spark-apps
+    ports:
+      - "4046-4050:4046-4050"
+    command: >
+      bash -c "
+      pip install kafka-python &&
+      mkdir -p /opt/bitnami/spark/.ivy2/local &&
+      spark-submit
+      --conf spark.sql.session.timeZone=Asia/Taipei
+      --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2 
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
+      --master spark://spark-master:7077 
+      /opt/spark-apps/spark_ma.py
+      "
+    depends_on:
+      # --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2
+      - spark-master
+      - spark-worker
+    networks:
+      - kafka-net
+
 networks:
   kafka-net:
     external:

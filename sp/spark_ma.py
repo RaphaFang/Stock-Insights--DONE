@@ -34,6 +34,7 @@ def main():
         .option("failOnDataLoss", "false") \
         .load()
     
+
     def calculate_sma(df, window_duration, column_name):
         df_with_watermark = df.withWatermark("start", "15 seconds")
 
@@ -64,11 +65,10 @@ def main():
             SF.when(col("initial_sma") == 0, SF.coalesce(col("prev_sma"), SF.lit(0)))
             .otherwise(col("initial_sma"))
         )
-
-        
         sma_df = sma_df.select(            
             col("symbol"),
             lit("MA_data").alias("type"),
+            lit(f"{window_duration}_MA_data").alias("MA_type"),
             col(f"window.start").alias("start"),
             col(f"window.end").alias("end"),
             col(column_name),
@@ -88,21 +88,37 @@ def main():
         # sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
         return sma_df
     
+    def send_to_kafka(df):
+        df.selectExpr(
+            "CAST(symbol AS STRING) AS key",
+            "to_json(struct(*)) AS value"
+        ).write \
+            .format("kafka") \
+            .option("kafka.bootstrap.servers", "kafka:9092") \
+            .option("topic", "kafka_MA_data") \
+            .save()
+        
     def process_batch(df, epoch_id):
         try:
             df = df.selectExpr("CAST(value AS STRING) as json_data") \
                 .select(from_json(col("json_data"), schema).alias("data")) \
                 .select("data.*")
             sma_5 = calculate_sma(df, 5, "sma_5")
+            # sma_15 = calculate_sma(df, 15, "sma_15")
+            # sma_30 = calculate_sma(df, 30, "sma_30")
+
+            send_to_kafka(sma_5)
+            # send_to_kafka(sma_15)
+            # send_to_kafka(sma_30)
             
-            sma_5.selectExpr(
-                "CAST(symbol AS STRING) AS key",
-                "to_json(struct(*)) AS value"
-            ).write \
-                .format("kafka") \
-                .option("kafka.bootstrap.servers", "kafka:9092") \
-                .option("topic", "kafka_MA_data") \
-                .save()
+            # sma_5.selectExpr(
+            #     "CAST(symbol AS STRING) AS key",
+            #     "to_json(struct(*)) AS value"
+            # ).write \
+            #     .format("kafka") \
+            #     .option("kafka.bootstrap.servers", "kafka:9092") \
+            #     .option("topic", "kafka_MA_data") \
+            #     .save()
             
         except Exception as e:
             print(f"Error processing batch {epoch_id}: {e}")
@@ -111,8 +127,6 @@ def main():
         .foreachBatch(process_batch) \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_ma") \
         .start()
-        # .outputMode("append") \
-        # .outputMode("update") \
     query.awaitTermination()
 
 if __name__ == "__main__":

@@ -36,30 +36,56 @@ def main():
     
     def calculate_sma(df, window_duration, column_name):
         df_with_watermark = df.withWatermark("start", "15 seconds")
+
         sma_df = df_with_watermark.groupBy(
             SF.window(col("start"), f"{window_duration} seconds", "1 second"), col("symbol")
         ).agg(
-            # SF.avg(SF.when(col("real_or_filled") == "real", col("vwap_price_per_sec"))).alias(column_name),
-            SF.avg(col("vwap_price_per_sec")).alias(column_name),
+            SF.sum(SF.when(col("size_per_sec") != 0, col("vwap_price_per_sec")).otherwise(0)).alias('sum_of_vwap'),
+            SF.count(SF.when(col("size_per_sec") != 0, col("vwap_price_per_sec"))).alias('count_of_vwap'),  # !這邊不應該用otherwise...........
             SF.count("*").alias(f"{window_duration}_data_count"),
-            SF.collect_list("start").alias("start_times")
-        ) \
-        .select(            
+            SF.collect_list("start").alias("start_times"),
+            SF.count(SF.when(col("real_or_filled") == "real", col("symbol"))).alias("real_data_count"),
+            SF.count(SF.when(col("real_or_filled") != "real", col("symbol"))).alias("filled_data_count"),
+        )
+    
+        window_spec = Window.partitionBy("symbol").orderBy("window.start")
+        sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
+
+
+        sma_df = sma_df.withColumn(
+            "initial_sma",
+            SF.when(col('count_of_vwap') != 0, col('sum_of_vwap') / col('count_of_vwap')).otherwise(0)
+        )
+        sma_df = sma_df.withColumn(
+            "prev_sma", SF.lag("initial_sma", 1).over(window_spec)
+        )
+        sma_df = sma_df.withColumn(
+            column_name, 
+            SF.when(col("initial_sma") == 0, SF.coalesce(col("prev_sma"), SF.lit(0)))
+            .otherwise(col("initial_sma"))
+        )
+
+        
+        sma_df = sma_df.select(            
             col("symbol"),
+            lit("MA_data").alias("type"),
             col(f"window.start").alias("start"),
             col(f"window.end").alias("end"),
             col(column_name),
+            col("sum_of_vwap"),
+            col("count_of_vwap"),
             col(f"{window_duration}_data_count"),
             SF.current_timestamp().alias("current_time"),
             SF.element_at(col("start_times"), 1).alias("first_start_in_window"),
             SF.element_at(col("start_times"), -1).alias("last_start_in_window"),
-            # SF.count(SF.when(col("real_or_filled") == "real", col("symbol"))).alias("real_data_count"),
-            # SF.count(SF.when(col("real_or_filled") != "real", col("symbol"))).alias("filled_data_count"),
+            col("real_data_count"),
+            col("filled_data_count"),
         )
         # 切記，會因為算式可能為空，導致輸出出錯，然後numInputRows就一直會是0
-        window_spec = Window.partitionBy("symbol").orderBy("start")
-        sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
+
+        # window_spec = Window.partitionBy("symbol").orderBy("start")
+        # sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
         return sma_df
     
     def process_batch(df, epoch_id):

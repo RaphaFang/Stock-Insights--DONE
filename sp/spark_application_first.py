@@ -47,6 +47,11 @@ def main():
         .config("spark.executor.cores", "2") \
         .config("spark.cores.max", "2") \
         .getOrCreate()
+
+
+    last_non_zero_sma = 100
+    broadcast_sma = spark.sparkContext.broadcast(last_non_zero_sma)
+
     kafka_df = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", "kafka:9092") \
@@ -56,7 +61,7 @@ def main():
         .option("failOnDataLoss", "false") \
         .load()
     
-    def process_batch(df, epoch_id):
+    def process_batch(df, epoch_id, broadcast_sma):
         try:
             df = df.selectExpr("CAST(value AS STRING) as json_data") \
                 .select(from_json(col("json_data"), schema).alias("data")) \
@@ -78,14 +83,43 @@ def main():
             window_spec = Window.partitionBy("symbol").orderBy("window.start")
             windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
-            # 調整欄位名稱，準備輸出
+
+
+
+            # 現在廣播是設定好了的
+            # 現在想想，用這個廣好像沒什麼用意啊...因為他是在節點上運作...不會同步到另一個節點，也就是說B核心的spark沒辦法知道A核心中修改的值
+            # 除非之後設定成昨天的收盤價格
+            # ! 這邊的廣播設定有大問題，他會只存下非0的資料，這應該不對
+            current_broadcast_value = broadcast_sma.value
+            windowed_df = windowed_df.withColumn(
+                "initial_vwap",
+                SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec")).otherwise(lit(current_broadcast_value))
+            )
             result_df = windowed_df.withColumn(
-                "vwap_price_per_sec",SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec")).otherwise(0)
-            ).withColumn(
+                "prev_vwap", SF.lag("initial_vwap", 1).over(window_spec)
+            )
+            result_df = result_df.withColumn(
+                "vwap_price_per_sec",
+                SF.when(col("initial_vwap") == 0, SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value)))
+                .otherwise(col("initial_vwap"))
+            )
+
+            last_non_zero_sma = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
+            if last_non_zero_sma:
+                broadcast_sma.unpersist()
+                broadcast_sma = spark.sparkContext.broadcast(last_non_zero_sma["vwap_price_per_sec"])
+
+
+
+
+
+
+
+            result_df = result_df.withColumn(
                 "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
             ).select(
                 "symbol",
-                lit("per_sec_data").alias("type"),
+                SF.lit("per_sec_data").alias("type"),
                 "real_or_filled",
                 "vwap_price_per_sec",
                 "size_per_sec",
@@ -113,7 +147,7 @@ def main():
  
             
     query = kafka_df.writeStream \
-        .foreachBatch(process_batch) \
+        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id, broadcast_sma)) \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
         .start()
         # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了

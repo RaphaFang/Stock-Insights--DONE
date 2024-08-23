@@ -9,12 +9,12 @@ from consumer.consumer_by_partition import create_consumer_by_partition
 
 import threading
 
-def main():
-    create_kafka_topic('kafka_raw_data', num_partitions=5)
-    create_kafka_topic('kafka_per_sec_data', num_partitions=1)
-    create_kafka_topic('kafka_per_sec_data_partition', num_partitions=5)
-    create_kafka_topic('kafka_MA_data', num_partitions=1)
+create_kafka_topic('kafka_raw_data', num_partitions=5)
+create_kafka_topic('kafka_per_sec_data', num_partitions=1)
+create_kafka_topic('kafka_per_sec_data_partition', num_partitions=5)
+create_kafka_topic('kafka_MA_data', num_partitions=1)
 
+def main():
     generate_heartbeat_data()
 
     # 第1站，ws送資料到kafka_raw_data

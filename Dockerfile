@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+ENV C_INCLUDE_PATH=/usr/include/librdkafka
+ENV LDFLAGS="-L/usr/lib"
+
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 

@@ -5,7 +5,7 @@ from routers import websocket_connect
 from starlette.middleware.sessions import SessionMiddleware
 import os
 import asyncio
-from routers.websocket_connect import kafka_consumer_loop
+from routers.websocket_connect import per_sec_consumer_loop, MA_consumer_loop
 
 app = FastAPI(
     docs_url="/stock/v1/docs",
@@ -20,7 +20,9 @@ app = FastAPI(
 async def startup_event():
     # loop = asyncio.get_event_loop()
     # loop.create_task(kafka_consumer_loop("kafka_per_sec_data"))
-    asyncio.create_task(kafka_consumer_loop("kafka_per_sec_data"))
+    asyncio.create_task(per_sec_consumer_loop("kafka_per_sec_data"))
+    asyncio.create_task(MA_consumer_loop("kafka_MA_data"))
+
 
 
 # @app.on_event("startup")
@@ -92,3 +94,5 @@ async def index(request: Request):
 # 	return FileResponse("./static/history_orders.html", media_type="text/html")
 
 app.include_router(html_router)
+
+# docker exec -it ce748e188c92 /bin/bash

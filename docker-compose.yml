@@ -12,23 +12,26 @@ services:
     #   - kafka
     networks:
       - kafka-net
-    # depends_on:
-    #   - redis
 
-    # environment:
-    #   - SQL_USER=${SQL_USER}
-    #   - SQL_PASSWORD=${SQL_PASSWORD}
-    #   - PRIVATE_KEY_PATH=/app/secrets/private_key.pem
-    #   - PUBLIC_KEY_PATH=/app/secrets/public_key.pem
-    #   - REDIS_PASSWORD=${REDIS_PASSWORD}
-    #   - TAP_PARTNER_KEY=${TAP_PARTNER_KEY}
-    #   - MERCHANT_ID=${MERCHANT_ID}
-    #   - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-    #   - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-    #   - GOOGLE_SESSION_SECRET_KEY=${GOOGLE_SESSION_SECRET_KEY}
-    #   - PERSONAL_GMAIL=${PERSONAL_GMAIL}
-    #   - PERSONAL_GMAIL_PASSWORD=${PERSONAL_GMAIL_PASSWORD}
 networks:
   kafka-net:
-    external:
-      name: stock-kafka_kafka-net
+    external: true
+# 本地------------------------------------------
+# networks:
+#   kafka-net:
+#     external:
+#       name: stock-kafka_kafka-net
+
+# environment:
+#   - SQL_USER=${SQL_USER}
+#   - SQL_PASSWORD=${SQL_PASSWORD}
+#   - PRIVATE_KEY_PATH=/app/secrets/private_key.pem
+#   - PUBLIC_KEY_PATH=/app/secrets/public_key.pem
+#   - REDIS_PASSWORD=${REDIS_PASSWORD}
+#   - TAP_PARTNER_KEY=${TAP_PARTNER_KEY}
+#   - MERCHANT_ID=${MERCHANT_ID}
+#   - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+#   - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+#   - GOOGLE_SESSION_SECRET_KEY=${GOOGLE_SESSION_SECRET_KEY}
+#   - PERSONAL_GMAIL=${PERSONAL_GMAIL}
+#   - PERSONAL_GMAIL_PASSWORD=${PERSONAL_GMAIL_PASSWORD}

@@ -14,7 +14,7 @@
         console.log("WebSocket connection established.");
       };
       ws.onmessage = function (event) {
-        console.log("Received data: ", event.data);
+        console.log("Received data:\n", event.data);
       };
       ws.onclose = function () {
         console.log("WebSocket connection closed.");

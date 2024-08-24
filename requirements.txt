@@ -5,10 +5,10 @@ authlib
 starlette
 itsdangerous
 asyncio
-# kafka-python
 websockets
 aiokafka
 
+# kafka-python
 # pydantic[email]
 # aiohttp
 # redis

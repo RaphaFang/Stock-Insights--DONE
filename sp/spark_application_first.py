@@ -44,9 +44,10 @@ def main():
 
     spark = SparkSession.builder \
         .appName("spark_per_sec_data") \
+        .master("local[2]") \
         .config("spark.executor.cores", "2") \
-        .config("spark.cores.max", "2") \
         .getOrCreate()
+        # .config("spark.cores.max", "2") \
 
 
     last_non_zero_sma = 100

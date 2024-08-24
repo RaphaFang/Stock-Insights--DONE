@@ -20,9 +20,9 @@ def main():
     ])
 
     spark = SparkSession.builder \
-        .appName("spark_MA") \
-        .config("spark.executor.cores", "1") \
-        .config("spark.cores.max", "1") \
+        .appName("spark_MA_data") \
+        .master("local[2]") \
+        .config("spark.executor.cores", "2") \
         .getOrCreate()
     
     kafka_df = spark.readStream \
@@ -104,12 +104,12 @@ def main():
                 .select(from_json(col("json_data"), schema).alias("data")) \
                 .select("data.*")
             sma_5 = calculate_sma(df, 5, "sma_5")
-            # sma_15 = calculate_sma(df, 15, "sma_15")
-            # sma_30 = calculate_sma(df, 30, "sma_30")
+            sma_15 = calculate_sma(df, 15, "sma_15")
+            sma_30 = calculate_sma(df, 30, "sma_30")
 
             send_to_kafka(sma_5)
-            # send_to_kafka(sma_15)
-            # send_to_kafka(sma_30)
+            send_to_kafka(sma_15)
+            send_to_kafka(sma_30)
             
             # sma_5.selectExpr(
             #     "CAST(symbol AS STRING) AS key",

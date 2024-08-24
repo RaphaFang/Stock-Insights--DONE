@@ -52,14 +52,14 @@ services:
     networks:
       - kafka-net
 
-networks:
-  kafka-net:
-    driver: overlay
-    attachable: true
+# networks:
+#   kafka-net:
+#     driver: overlay
+#     attachable: true
 volumes:
   kafka_data:
     driver: local
 # 本地------------------------------------------
-# networks:
-#   kafka-net:
-#     driver: bridge
+networks:
+  kafka-net:
+    driver: bridge

@@ -4,10 +4,8 @@ from kaf.kafka_topic_create import create_kafka_topic
 from producer.ws_producer import send_batch_to_kafka, add_to_batch, generate_heartbeat_data
 from producer.per_sec_data_producer import kafka_per_sec_data_producer
 
-from consumer.consumer import create_consumer
-from consumer.consumer_by_partition import create_consumer_by_partition
-
-import threading
+# from consumer.consumer import create_consumer
+# from consumer.consumer_by_partition import create_consumer_by_partition
 
 create_kafka_topic('kafka_raw_data', num_partitions=5)
 create_kafka_topic('kafka_per_sec_data', num_partitions=1)
@@ -22,7 +20,6 @@ def main():
     ws_handler.start()
     send_batch_to_kafka('kafka_raw_data')
 
-
     # 第2站，kafka_raw_data資料收到，送到kafka_per_sec_data
     # spark 資料已經處理好了
 
@@ -33,19 +30,15 @@ def main():
     kafka_per_sec_data_producer()
 
     # 第4站，kafka_per_sec_data_partition資料送到spark作第二次處理
-    # spark 資料已經處理好了
+    # spark 資料已經處理好了，傳遞到kafka_MA_data
 
     # 第5站，kafka_processed_data 資料送到 fastapi ws
-
 
     # 測試區
     # create_consumer('kafka_per_sec_data')
     # create_consumer('kafka_per_sec_data_partition')
-    create_consumer_by_partition('kafka_MA_data')
+    # create_consumer_by_partition('kafka_MA_data')
     # create_consumer_by_partition('kafka_per_sec_data_partition', partition=0)
-
-
-
 
 if __name__ == "__main__":
     main()

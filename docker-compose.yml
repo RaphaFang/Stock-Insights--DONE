@@ -1,7 +1,14 @@
 services:
   kafka:
     image: "bitnami/kafka:latest"
-    container_name: kafka
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4G
+      placement:
+        constraints:
+          - "node.hostname == ip-10-0-1-138"
     ports:
       - "9092:9092"
       - "9093:9093"
@@ -24,17 +31,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - kafka_data:/bitnami/kafka
     # 要考慮不要設定，不然log太多
-    deploy:
-      resources:
-        limits:
-          cpus: "2"
-          memory: 4G
     networks:
       - kafka-net
 
-  app:
-    build: .
-    container_name: kafka-app
+  kafka-app:
+    image: raphafang/kafka-app:latest
     env_file:
       - .env
     ports:
@@ -49,6 +50,9 @@ services:
         limits:
           cpus: "1.5"
           memory: 3G
+      placement:
+        constraints:
+          - "node.hostname == ip-10-0-1-138"
     networks:
       - kafka-net
 

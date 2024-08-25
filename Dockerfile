@@ -1,8 +1,4 @@
-# 86
-# FROM openjdk:11-jdk-slim
-# arm
-FROM openjdk:11-jdk-slim-arm64
-
+FROM openjdk:11-jdk-slim
 
 RUN apt-get update && apt-get install -y \
     python3.9 \

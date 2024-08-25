@@ -1,7 +1,10 @@
 services:
-  app:
-    container_name: fastapi-app
-    build: .
+  fastapi-app:
+    image: raphafang/fastapi-app:latest
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname == ip-10-0-1-114"
     ports:
       - "8001:8001"
     restart: always

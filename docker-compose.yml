@@ -62,8 +62,8 @@ services:
 # 本地------------------------------------------
 networks:
   kafka-net:
-    external:
-      name: stock-kafka_kafka-net
+    name: stock-kafka_kafka-net
+    external: true
 # -----------------------------------------------------------------------------
 # spark-master:
 #   image: bitnami/spark:latest

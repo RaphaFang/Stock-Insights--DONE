@@ -1,7 +1,10 @@
 services:
   spark-driver-sec:
     image: bitnami/spark:latest
-    container_name: spark-driver-sec
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname == ip-10-0-1-231"
     # environment:
     #   - SPARK_MODE=client
     #   - SPARK_MASTER_URL=spark://spark-master:7077
@@ -30,7 +33,10 @@ services:
 
   spark-driver-ma:
     image: bitnami/spark:latest
-    container_name: spark-driver-ma
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname == ip-10-0-1-231"
     # environment:
     #   - SPARK_MODE=client
     #   - SPARK_MASTER_URL=spark://spark-master:7077

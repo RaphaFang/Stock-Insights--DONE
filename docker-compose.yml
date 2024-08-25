@@ -3,7 +3,6 @@ services:
   kafka:
     image: "bitnami/kafka:latest"
     container_name: kafka
-
     ports:
       - "9092:9092"
       - "9093:9093"
@@ -36,8 +35,8 @@ services:
   app:
     build: .
     container_name: kafka-app
-    env_file:
-      - .env
+    # env_file:
+    #   - .env
     ports:
       - "8000:8000"
     depends_on:

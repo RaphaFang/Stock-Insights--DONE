@@ -1,6 +1,6 @@
 asyncio
 fugle_marketdata
-confluent_kafka==1.9.2
+confluent-kafka==2.5.0
 requests
 aiohttp
 pyspark==3.5.0

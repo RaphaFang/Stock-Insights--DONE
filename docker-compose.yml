@@ -2,9 +2,9 @@ services:
   spark-driver-sec:
     image: bitnami/spark:latest
     container_name: spark-driver-sec
-    environment:
-      - SPARK_MODE=client
-      - SPARK_MASTER_URL=spark://spark-master:7077
+    # environment:
+    #   - SPARK_MODE=client
+    #   - SPARK_MASTER_URL=spark://spark-master:7077
     volumes:
       - ./sp:/opt/spark-apps
       - ./.ivy2:/opt/bitnami/spark/.ivy2
@@ -31,9 +31,9 @@ services:
   spark-driver-ma:
     image: bitnami/spark:latest
     container_name: spark-driver-ma
-    environment:
-      - SPARK_MODE=client
-      - SPARK_MASTER_URL=spark://spark-master:7077
+    # environment:
+    #   - SPARK_MODE=client
+    #   - SPARK_MASTER_URL=spark://spark-master:7077
     volumes:
       - ./sp:/opt/spark-apps
       - ./.ivy2:/opt/bitnami/spark/.ivy2

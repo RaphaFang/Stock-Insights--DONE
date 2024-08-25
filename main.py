@@ -5,7 +5,7 @@ from producer.ws_producer import send_batch_to_kafka, add_to_batch, generate_hea
 from producer.per_sec_data_producer import kafka_per_sec_data_producer
 
 # from consumer.consumer import create_consumer
-# from consumer.consumer_by_partition import create_consumer_by_partition
+from consumer.consumer_by_partition import create_consumer_by_partition
 
 create_kafka_topic('kafka_raw_data', num_partitions=5)
 create_kafka_topic('kafka_per_sec_data', num_partitions=1)
@@ -37,7 +37,7 @@ def main():
     # 測試區
     # create_consumer('kafka_per_sec_data')
     # create_consumer('kafka_per_sec_data_partition')
-    # create_consumer_by_partition('kafka_MA_data')
+    create_consumer_by_partition('kafka_MA_data')
     # create_consumer_by_partition('kafka_per_sec_data_partition', partition=0)
 
 if __name__ == "__main__":

@@ -5,23 +5,20 @@ services:
     build: .
     ports:
       - "8001:8001"
-    # volumes:
-    #   - /home/ubuntu/WH/tdt/secrets:/app/secrets
     restart: always
-    # depends_on:
-    #   - kafka
     networks:
       - kafka-net
+    # volumes:
+    #   - /home/ubuntu/WH/tdt/secrets:/app/secrets
 
-networks:
-  kafka-net:
-    external: true
-# 本地------------------------------------------
 # networks:
 #   kafka-net:
-#     external:
-#       name: stock-kafka_kafka-net
-
+#     external: true
+# 本地------------------------------------------
+networks:
+  kafka-net:
+    external:
+      name: stock-kafka_kafka-net
 # environment:
 #   - SQL_USER=${SQL_USER}
 #   - SQL_PASSWORD=${SQL_PASSWORD}

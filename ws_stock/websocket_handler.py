@@ -25,7 +25,7 @@ class WebSocketHandler:
         print(f'disconnect: {code}, {message}')
 
     def handle_error(self,error):
-        print(f'error: {error}')
+        print(f'error from ws: {error}')
 
     def start(self):
         # client = WebSocketClient(api_key=FUGLE_API_KEY)

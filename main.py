@@ -37,7 +37,7 @@ def main():
     # 測試區
     # create_consumer('kafka_per_sec_data')
     # create_consumer('kafka_per_sec_data_partition')
-    create_consumer_by_partition('kafka_MA_data')
+    create_consumer_by_partition('kafka_raw_data')
     # create_consumer_by_partition('kafka_per_sec_data_partition', partition=0)
 
 if __name__ == "__main__":

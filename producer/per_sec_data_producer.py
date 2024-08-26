@@ -1,6 +1,8 @@
 from confluent_kafka import Consumer, Producer, KafkaError
 import json
 import threading
+import time
+
 
 stock_to_partition = {
     "2330": 0,
@@ -20,10 +22,28 @@ producer_config = {
 }
 
 # def send_to_partitioned_topic(symbol, message):
+def create_consumer(consumer_config):
+    while True:
+        try:
+            con = Consumer(consumer_config)
+            return con
+        except KafkaError as e:
+            print(f"Kafka consumer creation failed: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
 
-consumer = Consumer(consumer_config)
+def create_producer(producer_config):
+    while True:
+        try:
+            prod = Producer(producer_config)
+            return prod
+        except KafkaError as e:
+            print(f"Kafka producer creation failed: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
+
+
+consumer = create_consumer(consumer_config)
 consumer.subscribe(['kafka_per_sec_data'])
-producer = Producer(producer_config)
+producer = create_producer(producer_config)
 
 def kafka_per_sec_data_producer():
     msg = consumer.poll(timeout=1.0)

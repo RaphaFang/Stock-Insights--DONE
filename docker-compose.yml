@@ -33,11 +33,11 @@ services:
     # 要考慮不要設定，不然log太多
     networks:
       - kafka-net
-    healthcheck:
-      test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # healthcheck:
+    #   test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
 
   kafka-app:
     image: raphafang/kafka-app:latest

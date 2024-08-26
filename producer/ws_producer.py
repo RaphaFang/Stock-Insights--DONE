@@ -1,4 +1,4 @@
-from confluent_kafka import Producer
+from confluent_kafka import Producer, Consumer, KafkaError
 import threading
 import json
 from collections import deque
@@ -19,6 +19,17 @@ kafka_config = {
     'retry.backoff.ms': 1000,
     'delivery.timeout.ms': 30000, 
     }
+
+
+def create_producer():
+    while True:
+        try:
+            producer = Producer({'bootstrap.servers': 'kafka_stack_kafka:9092'})
+            return producer
+        except KafkaError as e:
+            print(f"Kafka producer creation failed: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
+
 producer = Producer(kafka_config)
 
 msg_deques = {symbol: deque() for symbol in stock_to_partition}

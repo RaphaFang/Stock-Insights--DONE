@@ -17,9 +17,18 @@ kafka_config = {
 #     'session.timeout.ms': 30000,
 #     'max.poll.interval.ms': 60000
 # }
+def create_consumer(kafka_config):
+    while True:
+        try:
+            con = Consumer(kafka_config)
+            return con
+        except KafkaError as e:
+            print(f"Kafka consumer creation failed: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
 
 def create_consumer_by_partition(topic, partition=None):
-    consumer = Consumer(kafka_config)
+    # consumer = Consumer(kafka_config)
+    consumer = create_consumer(kafka_config)
     if partition is not None:
         topic_partition = TopicPartition(topic, partition)
         consumer.assign([topic_partition])

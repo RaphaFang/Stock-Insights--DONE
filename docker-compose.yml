@@ -46,9 +46,9 @@ services:
       - .env
     ports:
       - "8000:8000"
-    depends_on:
-      kafka:
-        condition: service_healthy
+    # depends_on:
+    #   kafka:
+    #     condition: service_healthy
     environment:
       KAFKA_BROKER: kafka_stack_kafka:9092 # swarm版本需要的
       # KAFKA_BROKER: kafka:9092 # 本地適用

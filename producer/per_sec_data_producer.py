@@ -10,12 +10,12 @@ stock_to_partition = {
     "6115": 4
 }
 consumer_config = {
-    'bootstrap.servers': 'kafka:9092',
+    'bootstrap.servers': 'kafka_stack_kafka:9092',
     'group.id': 'send_group',
     'auto.offset.reset': 'earliest',
 }
 producer_config = {
-    'bootstrap.servers': 'kafka:9092',
+    'bootstrap.servers': 'kafka_stack_kafka:9092',
     'acks': 'all', 
 }
 

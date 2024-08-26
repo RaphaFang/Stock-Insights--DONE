@@ -13,7 +13,7 @@ stock_to_partition = {
     "6115": 4
 }
 kafka_config = {
-    'bootstrap.servers': 'kafka:9092',
+    'bootstrap.servers': 'kafka_stack_kafka:9092',
     'acks': 'all', 
     'retries': 5,   
     'retry.backoff.ms': 1000,

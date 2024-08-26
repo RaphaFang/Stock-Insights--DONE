@@ -3,12 +3,20 @@ import time
 import json
 
 kafka_config = {
-    'bootstrap.servers': 'kafka:9092',
-    'group.id': 'per_sec_data_partition_group',
+    'bootstrap.servers': 'kafka_stack_kafka:9092',
+    'group.id': 'MA_kafka_side_group',
     'auto.offset.reset': 'latest',
     'session.timeout.ms': 30000,
     'max.poll.interval.ms': 60000
 }
+
+# kafka_config = {
+#     'bootstrap.servers': 'kafka:9092',
+#     'group.id': 'per_sec_data_partition_group',
+#     'auto.offset.reset': 'latest',
+#     'session.timeout.ms': 30000,
+#     'max.poll.interval.ms': 60000
+# }
 
 def create_consumer_by_partition(topic, partition=None):
     consumer = Consumer(kafka_config)

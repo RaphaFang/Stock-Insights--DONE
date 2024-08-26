@@ -33,20 +33,22 @@ services:
     # 要考慮不要設定，不然log太多
     networks:
       - kafka-net
-    # healthcheck:
-    #   test: ["CMD", "nc", "-z", "kafka_stack_kafka", "9092"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka-app:
     image: raphafang/kafka-app:latest
+
     env_file:
       - .env
     ports:
       - "8000:8000"
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       KAFKA_BROKER: kafka_stack_kafka:9092 # swarm版本需要的
       # KAFKA_BROKER: kafka:9092 # 本地適用

@@ -26,6 +26,7 @@ def create_consumer(consumer_config):
     while True:
         try:
             con = Consumer(consumer_config)
+            print("Consumer build up, from kafka_per_sec_data_producer")
             return con
         except KafkaError as e:
             print(f"Kafka consumer creation failed: {e}. Retrying in 5 seconds...")
@@ -35,6 +36,7 @@ def create_producer(producer_config):
     while True:
         try:
             prod = Producer(producer_config)
+            print("Producer build up, from kafka_per_sec_data_producer")
             return prod
         except KafkaError as e:
             print(f"Kafka producer creation failed: {e}. Retrying in 5 seconds...")

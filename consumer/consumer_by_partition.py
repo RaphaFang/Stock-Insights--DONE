@@ -21,6 +21,7 @@ def create_consumer(kafka_config):
     while True:
         try:
             con = Consumer(kafka_config)
+            print("Consumer build up, from consumer_by_partition")
             return con
         except KafkaError as e:
             print(f"Kafka consumer creation failed: {e}. Retrying in 5 seconds...")

@@ -25,6 +25,7 @@ def create_producer():
     while True:
         try:
             producer = Producer({'bootstrap.servers': 'kafka:9092'})
+            print("Producer build up, from ws_producer")
             return producer
         except KafkaError as e:
             print(f"Kafka producer creation failed: {e}. Retrying in 5 seconds...")

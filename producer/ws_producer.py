@@ -13,7 +13,7 @@ stock_to_partition = {
     "6115": 4
 }
 kafka_config = {
-    'bootstrap.servers': 'kafka_stack_kafka:9092',
+    'bootstrap.servers': 'kafka:9092',
     'acks': 'all', 
     'retries': 5,   
     'retry.backoff.ms': 1000,
@@ -24,7 +24,7 @@ kafka_config = {
 def create_producer():
     while True:
         try:
-            producer = Producer({'bootstrap.servers': 'kafka_stack_kafka:9092'})
+            producer = Producer({'bootstrap.servers': 'kafka:9092'})
             return producer
         except KafkaError as e:
             print(f"Kafka producer creation failed: {e}. Retrying in 5 seconds...")

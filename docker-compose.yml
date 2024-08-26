@@ -17,7 +17,7 @@ services:
       KAFKA_CFG_PROCESS_ROLES: "broker,controller"
       KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
       KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka_stack_kafka:9092 # swarm版本需要的
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092 # swarm版本需要的
       # KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092 # 本地適用
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
       KAFKA_CFG_LOG_DIRS: /bitnami/kafka/data
@@ -46,11 +46,8 @@ services:
       - .env
     ports:
       - "8000:8000"
-    # depends_on:
-    #   kafka:
-    #     condition: service_healthy
     environment:
-      KAFKA_BROKER: kafka_stack_kafka:9092 # swarm版本需要的
+      KAFKA_BROKER: kafka:9092 # swarm版本需要的
       # KAFKA_BROKER: kafka:9092 # 本地適用
     deploy:
       resources:

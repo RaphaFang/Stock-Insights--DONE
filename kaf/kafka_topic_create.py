@@ -35,7 +35,7 @@ from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka import KafkaException
 
 def create_kafka_topic(topic_name, num_partitions=1, replication_factor=1, retention_ms=60000):  # 這邊的retention_ms是資料留存時間
-    admin_client = AdminClient({'bootstrap.servers': 'kafka_stack_kafka:9092'})
+    admin_client = AdminClient({'bootstrap.servers': 'kafka:9092'})
     try:
         topic_metadata = admin_client.list_topics(timeout=10).topics
         if topic_name in topic_metadata:

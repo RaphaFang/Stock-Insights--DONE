@@ -3,7 +3,7 @@ import time
 import json
 
 kafka_config = {
-    'bootstrap.servers': 'kafka_stack_kafka:9092',
+    'bootstrap.servers': 'kafka:9092',
     'group.id': 'MA_kafka_side_group',
     'auto.offset.reset': 'latest',
     'session.timeout.ms': 30000,

@@ -18,7 +18,7 @@ services:
       - "4040-4045:4040-4045"
     command: >
       bash -c "
-      pip install --user kafka-python &&
+      pip install --user kafka-python==2.0.2 six &&
       mkdir -p /opt/bitnami/spark/.ivy2/local &&
       spark-submit
       --master local[2]
@@ -52,7 +52,7 @@ services:
       - "4046-4050:4046-4050"
     command: >
       bash -c "
-      pip install --user kafka-python &&
+      pip install --user kafka-python==2.0.2 six &&
       mkdir -p /opt/bitnami/spark/.ivy2/local &&
       spark-submit
       --master local[2]

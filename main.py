@@ -15,7 +15,7 @@ create_kafka_topic('kafka_per_sec_data', num_partitions=1)
 create_kafka_topic('kafka_per_sec_data_partition', num_partitions=5)
 create_kafka_topic('kafka_MA_data', num_partitions=1)
 
-time.sleep(5) 
+time.sleep(30) 
 
 def main():
     generate_heartbeat_data()

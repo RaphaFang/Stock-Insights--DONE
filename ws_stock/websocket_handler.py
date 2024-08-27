@@ -34,8 +34,8 @@ class WebSocketHandler:
         stock.on("message", self.handle_message)
         stock.on("disconnect", self.handle_disconnect)
         stock.on("error", self.handle_error)
-        # stock.connect()
-        stock.connect(url="wss://api.fugle.tw/marketdata/v1.0/stock/streaming")
+        stock.connect()
+        # stock.connect(url="wss://api.fugle.tw/marketdata/v1.0/stock/streaming")
         stock.subscribe({
             "channel": 'trades',
             "symbol": '2330',

@@ -2,6 +2,7 @@ from fugle_marketdata import WebSocketClient, RestClient
 import json
 import asyncio
 import os
+import time
 FUGLE_API_KEY = os.getenv("FUGLE_API_KEY")
 
 class WebSocketHandler:
@@ -21,11 +22,14 @@ class WebSocketHandler:
     def handle_connect(self):
         print('connected')
 
-    def handle_disconnect(self , code, message):
+    def handle_disconnect(self, code, message):
         print(f'disconnect: {code}, {message}')
+        time.sleep(5)  # 延迟5秒后重新连接
+        self.start()
 
-    def handle_error(self,error):
+    def handle_error(self, error):
         print(f'error from ws: {error}')
+        self.client.stock.connect()
 
     def start(self):
         # client = WebSocketClient(api_key=FUGLE_API_KEY)

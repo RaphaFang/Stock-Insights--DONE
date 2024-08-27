@@ -15,7 +15,10 @@ create_kafka_topic('kafka_per_sec_data', num_partitions=1)
 create_kafka_topic('kafka_per_sec_data_partition', num_partitions=5)
 create_kafka_topic('kafka_MA_data', num_partitions=1)
 
-time.sleep(30) 
+# time.sleep(30)
+import os
+FUGLE_API_KEY = os.getenv("FUGLE_API_KEY")
+print(FUGLE_API_KEY)
 
 def main():
     generate_heartbeat_data()

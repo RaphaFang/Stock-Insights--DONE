@@ -22,14 +22,26 @@ class WebSocketHandler:
     def handle_connect(self):
         print('connected')
 
+    # def handle_disconnect(self, code, message):
+    #     print(f'disconnect: {code}, {message}')
+    #     time.sleep(5)  # 延迟5秒后重新连接
+    #     self.start()
+
+    # def handle_error(self, error):
+    #     print(f'error from ws: {error}')
+    #     self.client.stock.connect()
+
     def handle_disconnect(self, code, message):
         print(f'disconnect: {code}, {message}')
+        self.client.stock.close()  # 关闭现有连接
         time.sleep(5)  # 延迟5秒后重新连接
-        self.start()
+        self.start()  # 尝试重新连接
 
     def handle_error(self, error):
         print(f'error from ws: {error}')
-        self.client.stock.connect()
+        self.client.stock.close()  # 关闭现有连接
+        time.sleep(5)  # 延迟5秒后重新连接
+        self.start()
 
     def start(self):
         # client = WebSocketClient(api_key=FUGLE_API_KEY)

@@ -4,9 +4,9 @@ from pyspark.sql.types import StructType, StructField, StringType, DoubleType, I
 from pyspark.sql.functions import from_json, col, window, sum as spark_sum, count as spark_count,avg, last, lit, to_timestamp, current_timestamp
 from pyspark.sql.functions import current_timestamp, window, when, lit, coalesce
 from pyspark.sql import functions as SF
-from kafka import KafkaProducer
-import json
-import six
+# from kafka import KafkaProducer
+# import json
+# import six
 
 
 # 不能把producer放在全域，好像是spark才會有的問題

@@ -47,6 +47,8 @@ services:
       - .env
     ports:
       - "8000:8000"
+    dns:
+      - 8.8.8.8
     environment:
       KAFKA_BROKER: kafka:9092 # swarm版本需要的
       # KAFKA_BROKER: kafka:9092 # 本地適用

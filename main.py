@@ -32,7 +32,7 @@ def main():
     # 已經送到 fastapi ws
 
     # 第3.2站，spark處理的kafka_per_sec_data收到，送到kafka_per_sec_data_partition
-    kafka_per_sec_data_producer()
+    # kafka_per_sec_data_producer()
 
     # 第4站，kafka_per_sec_data_partition資料送到spark作第二次處理
     # spark 資料已經處理好了，傳遞到kafka_MA_data

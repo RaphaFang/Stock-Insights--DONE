@@ -11,7 +11,7 @@ app = FastAPI(
     docs_url="/stock/v1/docs",
     openapi_url="/stock/v1/openapi.json"
 )
-# app.mount("/stock/v1/static", StaticFiles(directory='static'), name="static")
+app.mount("/stock/v1/static", StaticFiles(directory='static'), name="static")
 # app.add_middleware(AuthMiddleware)
 # setup_cors(app)
 
@@ -94,5 +94,3 @@ async def index(request: Request):
 # 	return FileResponse("./static/history_orders.html", media_type="text/html")
 
 app.include_router(html_router)
-
-# docker exec -it ce748e188c92 /bin/bash

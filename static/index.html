@@ -4,12 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WebSocket Test</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/stock/v1/static/css_js_folder/js/chart.js" defer></script>
+    <!-- <script src="/stock/v1/static/css_js_folder/js/pre_job.js" defer></script> -->
+    <!-- <link rel="stylesheet" href="/tdt/v1/static/css_js_folder/css/attraction_style.css" /> -->
+    <!-- <link rel="stylesheet" href="/tdt/v1/static/css_js_folder/css/signin_signout_section.css" /> -->
   </head>
   <body>
     <h1>WebSocket Connection Test</h1>
     <p>the testing page, keep blank</p>
-    <script>
-      const ws = new WebSocket("ws://0.0.0.0:8001/stock/v1/ws/data");
+    <!-- <script>
+      const ws = new WebSocket("ws://raphaelfang.com:8001/stock/v1/ws/data");
       ws.onopen = function () {
         console.log("WebSocket connection established.");
       };
@@ -22,6 +28,6 @@
       ws.onerror = function (error) {
         console.error("WebSocket error:", error);
       };
-    </script>
+    </script> -->
   </body>
 </html>

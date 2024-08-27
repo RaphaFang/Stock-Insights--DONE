@@ -31,7 +31,7 @@ def create_producer():
             print(f"Kafka producer creation failed: {e}. Retrying in 5 seconds...")
             time.sleep(5)
 
-producer = create_producer(kafka_config)
+producer = create_producer()
 
 msg_deques = {symbol: deque() for symbol in stock_to_partition}
 

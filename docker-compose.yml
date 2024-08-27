@@ -68,7 +68,7 @@ services:
 # 本地------------------------------------------
 networks:
   kafka-net:
-    name: stock-kafka_kafka-net
+    name: kafka_stack_kafka-net
     external: true
 # -----------------------------------------------------------------------------
 # spark-master:

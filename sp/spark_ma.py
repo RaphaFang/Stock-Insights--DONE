@@ -3,6 +3,8 @@ from pyspark.sql.window import Window
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, BooleanType, TimestampType
 from pyspark.sql.functions import from_json, col, window, sum as spark_sum, count as spark_count,avg, last, lit, to_timestamp, current_timestamp
 from pyspark.sql import functions as SF
+import six
+
 
 def main():
     schema = StructType([

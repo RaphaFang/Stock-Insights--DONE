@@ -6,6 +6,8 @@ from pyspark.sql.functions import current_timestamp, window, when, lit, coalesce
 from pyspark.sql import functions as SF
 from kafka import KafkaProducer
 import json
+import six
+
 
 # 不能把producer放在全域，好像是spark才會有的問題
 # producer = KafkaProducer(

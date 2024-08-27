@@ -9,7 +9,6 @@ from consumer.consumer_by_partition import create_consumer_by_partition
 
 import time
 
-
 create_kafka_topic('kafka_raw_data', num_partitions=5)
 create_kafka_topic('kafka_per_sec_data', num_partitions=1)
 create_kafka_topic('kafka_per_sec_data_partition', num_partitions=5)
@@ -35,7 +34,7 @@ def main():
     # 已經送到 fastapi ws
 
     # 第3.2站，spark處理的kafka_per_sec_data收到，送到kafka_per_sec_data_partition
-    # kafka_per_sec_data_producer()
+    kafka_per_sec_data_producer()
 
     # 第4站，kafka_per_sec_data_partition資料送到spark作第二次處理
     # spark 資料已經處理好了，傳遞到kafka_MA_data
@@ -43,10 +42,8 @@ def main():
     # 第5站，kafka_processed_data 資料送到 fastapi ws
 
     # 測試區
-    # create_consumer('kafka_per_sec_data')
-    # create_consumer('kafka_per_sec_data_partition')
-    create_consumer_by_partition('kafka_raw_data')
-    # create_consumer_by_partition('kafka_per_sec_data_partition', partition=0)
+    # create_consumer_by_partition('kafka_raw_data')
+    create_consumer_by_partition('kafka_MA_data', partition=0)
 
 if __name__ == "__main__":
     main()

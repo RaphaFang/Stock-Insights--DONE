@@ -43,31 +43,35 @@ def create_producer(producer_config):
             time.sleep(5)
 
 
-consumer = create_consumer(consumer_config)
-consumer.subscribe(['kafka_per_sec_data'])
-producer = create_producer(producer_config)
 
 def kafka_per_sec_data_producer():
-    msg = consumer.poll(timeout=1.0)
-    if msg:
-        if msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                pass
-            else:
-                print(msg.error())
+    consumer = create_consumer(consumer_config)
+    consumer.subscribe(['kafka_per_sec_data'])
+    producer = create_producer(producer_config)
 
-        raw_message = json.loads(msg.value().decode('utf-8'))
-        symbol = raw_message.get('symbol')
-        par = stock_to_partition.get(symbol, 0)
-                
-        producer.produce('kafka_per_sec_data_partition', value=json.dumps(raw_message).encode('utf-8'), partition=par)
-        producer.poll(0)
-            # producer.flush()
-    else:
-        print("nothing at `kafka_per_sec_data`, nothing to send to kafka_per_sec_data_partition")
+    def loop_process():
+        msg = consumer.poll(timeout=1.0)
+        if msg:
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    pass
+                else:
+                    print(msg.error())
+
+            raw_message = json.loads(msg.value().decode('utf-8'))
+            symbol = raw_message.get('symbol')
+            par = stock_to_partition.get(symbol, 0)
+                    
+            producer.produce('kafka_per_sec_data_partition', value=json.dumps(raw_message).encode('utf-8'), partition=par)
+            producer.poll(0)
+                # producer.flush()
+        else:
+            print("nothing at `kafka_per_sec_data`, nothing to send to kafka_per_sec_data_partition")
+            
+        producer.flush()
+        threading.Timer(1.0, loop_process).start()
         
-    producer.flush()
-    threading.Timer(1.0, kafka_per_sec_data_producer).start()
+    loop_process()
                 
     # except KeyboardInterrupt:
     #     pass

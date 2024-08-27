@@ -31,7 +31,6 @@ def create_producer():
             print(f"Kafka producer creation failed: {e}. Retrying in 5 seconds...")
             time.sleep(5)
 
-producer = create_producer()
 
 msg_deques = {symbol: deque() for symbol in stock_to_partition}
 
@@ -61,21 +60,27 @@ def generate_heartbeat_data():
     threading.Timer(sleep_time, generate_heartbeat_data).start()
 
 def send_batch_to_kafka(topic):
-    start = time.time()
-    for symbol, deque in msg_deques.items():
-        if deque:
-            batch = list(deque)
-            deque.clear()
-            for msg in batch:
-                par = stock_to_partition[symbol]
-                json_data = json.dumps(msg).encode('utf-8')
-                producer.produce(topic, partition=par, value=json_data) #, callback=delivery_report
+    print("start send_batch_to_kafka")
+    producer = create_producer()
 
-    producer.poll(0)
-    producer.flush()
-    next = start + 1
-    sleep_time = max(0, next - time.time())
-    threading.Timer(sleep_time, send_batch_to_kafka, [topic]).start()
+    def loop_process():
+        start = time.time()
+        for symbol, deque in msg_deques.items():
+            if deque:
+                batch = list(deque)
+                deque.clear()
+                for msg in batch:
+                    par = stock_to_partition[symbol]
+                    json_data = json.dumps(msg).encode('utf-8')
+                    producer.produce(topic, partition=par, value=json_data) #, callback=delivery_report
+
+        producer.poll(0)
+        producer.flush()
+        next = start + 1
+        sleep_time = max(0, next - time.time())
+        threading.Timer(sleep_time, loop_process, [topic]).start()
+
+    loop_process()
 
 def add_to_batch(data):
     symbol = data.get("symbol")

@@ -21,8 +21,8 @@ def main():
     generate_heartbeat_data()
 
     # 第1站，ws送資料到kafka_raw_data
-    ws_handler = WebSocketHandler(handle_data_callback=add_to_batch)
-    ws_handler.start()
+    # ws_handler = WebSocketHandler(handle_data_callback=add_to_batch)
+    # ws_handler.start()
     send_batch_to_kafka('kafka_raw_data')
 
     # 第2站，kafka_raw_data資料收到，送到kafka_per_sec_data

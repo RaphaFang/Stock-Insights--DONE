@@ -30,6 +30,8 @@ def create_consumer(kafka_config):
 def create_consumer_by_partition(topic, partition=None):
     # consumer = Consumer(kafka_config)
     consumer = create_consumer(kafka_config)
+    print(f"Consumer created for topic: {topic}, partition: {partition}")
+    
     if partition is not None:
         topic_partition = TopicPartition(topic, partition)
         consumer.assign([topic_partition])
@@ -37,6 +39,8 @@ def create_consumer_by_partition(topic, partition=None):
     else:
         consumer.subscribe([topic])
         print(f'Started consuming from topic: {topic}, but without partition.')
+
+    print(f"Consumer subscription details: {consumer.subscription()}") 
 
     try:
         while True:

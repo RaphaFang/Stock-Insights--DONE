@@ -63,7 +63,7 @@ def send_batch_to_kafka(topic):
     print("start send_batch_to_kafka")
     producer = create_producer()
 
-    def loop_process():
+    def loop_process(topic):
         start = time.time()
         for symbol, deque in msg_deques.items():
             if deque:
@@ -80,7 +80,7 @@ def send_batch_to_kafka(topic):
         sleep_time = max(0, next - time.time())
         threading.Timer(sleep_time, loop_process, [topic]).start()
 
-    loop_process()
+    loop_process(topic)
 
 def add_to_batch(data):
     symbol = data.get("symbol")

@@ -6,7 +6,11 @@ FUGLE_API_KEY = os.getenv("FUGLE_API_KEY")
 
 class WebSocketHandler:
     def __init__(self, handle_data_callback):
-        self.client = WebSocketClient(api_key=FUGLE_API_KEY)
+        # self.client = WebSocketClient(api_key=FUGLE_API_KEY)
+        self.client = WebSocketClient(
+            api_key=FUGLE_API_KEY,
+            url="wss://api.fugle.tw/marketdata/v1.0/stock/streaming"
+        )
         self.handle_data_callback = handle_data_callback
 
     def handle_message(self, message):

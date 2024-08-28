@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WebSocket Test</title>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/stock/v1/static/css_js_folder/js/chart.js" defer></script>
     <!-- <script src="/stock/v1/static/css_js_folder/js/pre_job.js" defer></script> -->
@@ -14,20 +13,6 @@
   <body>
     <h1>WebSocket Connection Test</h1>
     <p>the testing page, keep blank</p>
-    <!-- <script>
-      const ws = new WebSocket("ws://raphaelfang.com:8001/stock/v1/ws/data");
-      ws.onopen = function () {
-        console.log("WebSocket connection established.");
-      };
-      ws.onmessage = function (event) {
-        console.log("Received data:\n", event.data);
-      };
-      ws.onclose = function () {
-        console.log("WebSocket connection closed.");
-      };
-      ws.onerror = function (error) {
-        console.error("WebSocket error:", error);
-      };
-    </script> -->
+    <canvas id="stockChart" width="800" height="400"></canvas>
   </body>
 </html>

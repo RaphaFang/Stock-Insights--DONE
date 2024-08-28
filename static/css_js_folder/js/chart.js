@@ -1,25 +1,20 @@
 document.addEventListener("DOMContentLoaded", function () {
+  const maxDataPoints = 16200; // 最大数据量
   const labels = [];
   const vwapPriceData = [];
-  const sizePerSecData = [];
   const sma5Data = [];
+  const sizePerSecData = [];
 
-  const ctx = document.getElementById("stockChart").getContext("2d");
-  const stockChart = new Chart(ctx, {
-    type: "bar",
+  // 价格图表设置
+  const priceCtx = document.getElementById("priceChart").getContext("2d");
+  const priceChart = new Chart(priceCtx, {
+    type: "line", // 改为折线图
     data: {
       labels: labels,
       datasets: [
         {
-          label: "Size per Second",
-          data: sizePerSecData,
-          backgroundColor: "rgba(54, 162, 235, 0.5)",
-          yAxisID: "y",
-        },
-        {
           label: "VWAP Price per Second",
           data: vwapPriceData,
-          type: "line",
           borderColor: "rgba(255, 99, 132, 1)",
           borderWidth: 2,
           fill: false,
@@ -28,11 +23,63 @@ document.addEventListener("DOMContentLoaded", function () {
         {
           label: "5 Period SMA",
           data: sma5Data,
-          type: "line",
           borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 2,
           fill: false,
           yAxisID: "y1",
+        },
+      ],
+    },
+    options: {
+      scales: {
+        y1: {
+          type: "linear",
+          position: "left",
+          title: {
+            display: true,
+            text: "Price",
+          },
+        },
+        x: {
+          type: "time",
+          time: {
+            unit: "second",
+            displayFormats: {
+              second: "h:mm:ss a",
+            },
+          },
+          title: {
+            display: true,
+            text: "Time",
+          },
+        },
+      },
+      plugins: {
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: "x",
+          },
+          zoom: {
+            enabled: true,
+            mode: "x",
+          },
+        },
+      },
+    },
+  });
+
+  // 成交量图表设置
+  const sizeCtx = document.getElementById("sizeChart").getContext("2d");
+  const sizeChart = new Chart(sizeCtx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Size per Second",
+          data: sizePerSecData,
+          backgroundColor: "rgba(54, 162, 235, 0.5)",
         },
       ],
     },
@@ -46,18 +93,29 @@ document.addEventListener("DOMContentLoaded", function () {
             text: "Size",
           },
         },
-        y1: {
-          type: "linear",
-          position: "right",
-          title: {
-            display: true,
-            text: "Price",
-          },
-        },
         x: {
+          type: "time",
+          time: {
+            unit: "second",
+            displayFormats: {
+              second: "h:mm:ss a",
+            },
+          },
           title: {
             display: true,
             text: "Time",
+          },
+        },
+      },
+      plugins: {
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: "x",
+          },
+          zoom: {
+            enabled: true,
+            mode: "x",
           },
         },
       },
@@ -75,17 +133,25 @@ document.addEventListener("DOMContentLoaded", function () {
     const incomingData = JSON.parse(event.data);
     console.log("Received data: ", incomingData);
 
-    const timeLabel = new Date(incomingData.current_time).toLocaleTimeString();
-    labels.push(timeLabel);
-    vwapPriceData.push(incomingData.vwap_price_per_sec);
-    sizePerSecData.push(incomingData.size_per_sec);
+    const timeLabel = new Date(incomingData.current_time).toLocaleTimeString("en-US", { hour12: true });
 
-    if (incomingData.sma_5 !== undefined) {
-      sma5Data.push(incomingData.sma_5);
+    if (!labels.includes(timeLabel)) {
+      labels.push(timeLabel);
+      if (labels.length > maxDataPoints) {
+        labels.shift();
+        vwapPriceData.shift();
+        sma5Data.shift();
+        sizePerSecData.shift();
+      }
     }
 
+    vwapPriceData.push(incomingData.vwap_price_per_sec);
+    sma5Data.push(incomingData.sma_5 || null);
+    sizePerSecData.push(incomingData.size_per_sec);
+
     // 更新图表
-    stockChart.update();
+    priceChart.update();
+    sizeChart.update();
   };
 
   ws.onerror = function (error) {
@@ -95,18 +161,4 @@ document.addEventListener("DOMContentLoaded", function () {
   ws.onclose = function () {
     console.log("WebSocket connection closed");
   };
-
-  // 可选：限制图表上显示的数据点数量
-  function limitDataPoints() {
-    const maxDataPoints = 50; // 最多显示的数据点数量
-    if (labels.length > maxDataPoints) {
-      labels.shift();
-      vwapPriceData.shift();
-      sizePerSecData.shift();
-      sma5Data.shift();
-    }
-  }
-
-  // 定期限制数据点
-  setInterval(limitDataPoints, 1000);
 });

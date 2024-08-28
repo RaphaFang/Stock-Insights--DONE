@@ -5,14 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WebSocket Test</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+
     <script src="/stock/v1/static/css_js_folder/js/chart.js" defer></script>
+    <link rel="stylesheet" href="/stock/v1/static/css_js_folder/css/style.css" />
     <!-- <script src="/stock/v1/static/css_js_folder/js/pre_job.js" defer></script> -->
     <!-- <link rel="stylesheet" href="/tdt/v1/static/css_js_folder/css/attraction_style.css" /> -->
     <!-- <link rel="stylesheet" href="/tdt/v1/static/css_js_folder/css/signin_signout_section.css" /> -->
   </head>
   <body>
-    <h1>WebSocket Connection Test</h1>
-    <p>the testing page, keep blank</p>
-    <canvas id="stockChart" width="800" height="400"></canvas>
+    <h1>Stock Chart with WebSocket</h1>
+    <div class="chart-container">
+      <canvas id="priceChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="sizeChart"></canvas>
+    </div>
   </body>
 </html>

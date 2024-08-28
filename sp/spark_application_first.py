@@ -38,7 +38,7 @@ def main():
         StructField("serial", StringType(), True),
         StructField("id", StringType(), True),
         StructField("channel", StringType(), True),
-        StructField("last_day_price", DoubleType(), True),
+        StructField("yesterday_price", DoubleType(), True),
     ])
 
     spark = SparkSession.builder \
@@ -76,7 +76,7 @@ def main():
                 SF.last("time", ignorenulls=True).alias("last_data_time"),
                 SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
                 SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
-                SF.last("last_day_price", ignorenulls=True).alias("last_day_price"),
+                SF.last("yesterday_price", ignorenulls=True).alias("yesterday_price"),
             )
             # 這會是更有效率的作法，比起在尾部加上orderby 
             window_spec = Window.partitionBy("symbol").orderBy("window.start")
@@ -103,8 +103,8 @@ def main():
 
             result_df = result_df.withColumn(
                 "price_change_percentage",
-                SF.when(col("last_day_price") != 0, 
-                    SF.round(((col("vwap_price_per_sec") - col("last_day_price")) / col("last_day_price")) * 100, 2)
+                SF.when(col("yesterday_price") != 0, 
+                    SF.round(((col("vwap_price_per_sec") - col("yesterday_price")) / col("yesterday_price")) * 100, 2)
                 ).otherwise(0) 
             )
             # 下方式重新負值的機制
@@ -151,7 +151,7 @@ def main():
                 "size_per_sec",
                 "volume_till_now",
 
-                "last_day_price",
+                "yesterday_price",
                 "price_change_percentage"
             )
             # result_df.foreachPartition(send_partition_to_kafka)

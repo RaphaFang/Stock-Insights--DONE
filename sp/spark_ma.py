@@ -25,20 +25,29 @@ def main():
         .config("spark.executor.cores", "2") \
         .getOrCreate()
     
+    b_5ma = 100
+    b_15ma = 200
+    b_30ma = 300
+
+    broadcast_5ma = spark.sparkContext.broadcast(b_5ma)
+    broadcast_15ma = spark.sparkContext.broadcast(b_15ma)
+    broadcast_30ma = spark.sparkContext.broadcast(b_30ma)
+
+    
     kafka_df = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", "kafka:9092") \
-        .option("subscribe", "kafka_per_sec_data_partition") \
+        .option("subscribe", "kafka_per_sec_data") \
         .option("startingOffsets", "earliest") \
-        .option("maxOffsetsPerTrigger", "1000") \
+        .option("maxOffsetsPerTrigger", "2000") \
         .option("failOnDataLoss", "false") \
         .load()
+        # .option("subscribe", "kafka_per_sec_data_partition") \
     
 
-    def calculate_sma(df, window_duration, column_name):
-        # df_with_watermark = df.withWatermark("start", "10 seconds")
+    def calculate_sma(df, window_duration, column_name, broadcast):
+        # df_with_watermark = df.withWatermark("start", "15 seconds")
         # sma_df = df_with_watermark.groupBy(
-        
         sma_df = df.groupBy(
             SF.window(col("start"), f"{window_duration} seconds", "1 second"), col("symbol")
         ).agg(
@@ -53,40 +62,41 @@ def main():
         window_spec = Window.partitionBy("symbol").orderBy("window.start")
         sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
-
+        current_broadcast_value = broadcast.value
         sma_df = sma_df.withColumn(
             "initial_sma",
-            SF.when(col('count_of_vwap') != 0, col('sum_of_vwap') / col('count_of_vwap')).otherwise(0)
+            SF.when(col('count_of_vwap') != 0, col('sum_of_vwap') / col('count_of_vwap'))
+            .otherwise(0)
         )
         sma_df = sma_df.withColumn(
             "prev_sma", SF.lag("initial_sma", 1).over(window_spec)
         )
         sma_df = sma_df.withColumn(
             column_name, 
-            SF.when(col("initial_sma") == 0, SF.coalesce(col("prev_sma"), SF.lit(0)))
+            SF.when(col("initial_sma") == 0, SF.coalesce(col("prev_sma"), SF.lit(current_broadcast_value)))
             .otherwise(col("initial_sma"))
         )
+
+
         sma_df = sma_df.select(            
             col("symbol"),
             lit("MA_data").alias("type"),
             lit(f"{window_duration}_MA_data").alias("MA_type"),
             col(f"window.start").alias("start"),
             col(f"window.end").alias("end"),
+
+            SF.current_timestamp().alias("current_time"),
+            SF.element_at(col("start_times"), 1).alias("first_in_window"),
+            SF.element_at(col("start_times"), -1).alias("last_in_window"),
+            col("real_data_count"),
+            col("filled_data_count"),
+
             col(column_name),
             col("sum_of_vwap"),
             col("count_of_vwap"),
             col(f"{window_duration}_data_count"),
-            SF.current_timestamp().alias("current_time"),
-            SF.element_at(col("start_times"), 1).alias("first_start_in_window"),
-            SF.element_at(col("start_times"), -1).alias("last_start_in_window"),
-            col("real_data_count"),
-            col("filled_data_count"),
         )
         # 切記，會因為算式可能為空，導致輸出出錯，然後numInputRows就一直會是0
-
-
-        # window_spec = Window.partitionBy("symbol").orderBy("start")
-        # sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
         return sma_df
     
     def send_to_kafka(df):
@@ -99,14 +109,16 @@ def main():
             .option("topic", "kafka_MA_data") \
             .save()
         
-    def process_batch(df, epoch_id):
+    def process_batch(df, epoch_id, broadcast_5ma, broadcast_15ma, broadcast_30ma):
         try:
             df = df.selectExpr("CAST(value AS STRING) as json_data") \
                 .select(SF.from_json(col("json_data"), schema).alias("data")) \
                 .select("data.*")
-            sma_5 = calculate_sma(df, 5, "sma_5")
-            # sma_15 = calculate_sma(df, 15, "sma_15")
-            # sma_30 = calculate_sma(df, 30, "sma_30")
+            # current_broadcast_value = broadcast_ma.value
+
+            sma_5 = calculate_sma(df, 5, "sma_5", broadcast_5ma)
+            # sma_15 = calculate_sma(df, 15, "sma_15", broadcast_15ma)
+            # sma_30 = calculate_sma(df, 30, "sma_30", broadcast_30ma)
 
             send_to_kafka(sma_5)
             # send_to_kafka(sma_15)
@@ -116,9 +128,10 @@ def main():
             print(f"Error processing batch {epoch_id}: {e}")
             
     query = kafka_df.writeStream \
-        .foreachBatch(process_batch) \
+        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id, broadcast_5ma, broadcast_15ma, broadcast_30ma)) \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_ma") \
         .start()
+        # .foreachBatch(process_batch) \
     query.awaitTermination()
 
 if __name__ == "__main__":

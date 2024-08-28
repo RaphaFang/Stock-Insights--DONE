@@ -25,7 +25,7 @@ def main():
     # 第1站，ws送資料到kafka_raw_data
     ws_handler = WebSocketHandler(handle_data_callback=add_to_batch)
     ws_handler.start()
-    send_batch_to_kafka('kafka_raw_data')
+    send_batch_to_kafka('kafka_raw_data', 200)  # 增加了昨天報價的參數
 
     # 第2站，kafka_raw_data資料收到，送到kafka_per_sec_data
     # spark 資料已經處理好了
@@ -42,7 +42,7 @@ def main():
     # 第5站，kafka_processed_data 資料送到 fastapi ws
 
     # 測試區
-    # create_consumer_by_partition('kafka_raw_data')
+    # create_consumer_by_partition('kafka_per_sec_data_partition', partition=0)
     create_consumer_by_partition('kafka_MA_data', partition=0)
 
 if __name__ == "__main__":

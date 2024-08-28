@@ -64,7 +64,7 @@ def kafka_per_sec_data_producer():
                     
             producer.produce('kafka_per_sec_data_partition', value=json.dumps(raw_message).encode('utf-8'), partition=par)
             producer.poll(0)
-                # producer.flush()
+            producer.flush()
         else:
             print("nothing at `kafka_per_sec_data`, nothing to send to kafka_per_sec_data_partition")
             

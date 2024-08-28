@@ -51,7 +51,8 @@ def generate_heartbeat_data():
             "time": int(datetime.utcnow().timestamp() * 1000000),  
             "serial": "heartbeat_serial",
             "id": "heartbeat_id",
-            "channel": "heartbeat_channel"
+            "channel": "heartbeat_channel",
+            "yesterday_price":200
         }
         msg_deques[symbol].append(data)
 
@@ -59,11 +60,11 @@ def generate_heartbeat_data():
     sleep_time = max(0, next - time.time())
     threading.Timer(sleep_time, generate_heartbeat_data).start()
 
-def send_batch_to_kafka(topic):
+def send_batch_to_kafka(topic, yesterday_price):
     print("start send_batch_to_kafka")
     producer = create_producer()
 
-    def loop_process(topic):
+    def loop_process(topic, yesterday_price):
         start = time.time()
         for symbol, deque in msg_deques.items():
             if deque:
@@ -71,6 +72,7 @@ def send_batch_to_kafka(topic):
                 deque.clear()
                 for msg in batch:
                     par = stock_to_partition[symbol]
+                    msg["yesterday_price"]=yesterday_price
                     json_data = json.dumps(msg).encode('utf-8')
                     producer.produce(topic, partition=par, value=json_data) #, callback=delivery_report
 
@@ -80,7 +82,7 @@ def send_batch_to_kafka(topic):
         sleep_time = max(0, next - time.time())
         threading.Timer(sleep_time, loop_process, [topic]).start()
 
-    loop_process(topic)
+    loop_process(topic, yesterday_price)
 
 def add_to_batch(data):
     symbol = data.get("symbol")

@@ -8,20 +8,13 @@ class WebSocketHandler:
     def __init__(self, handle_data_callback):
         self.client = WebSocketClient(api_key=FUGLE_API_KEY)
         self.handle_data_callback = handle_data_callback
-        # self.client = WebSocketClient(
-        #     api_key=FUGLE_API_KEY,
-        #     url="wss://api.fugle.tw/marketdata/v1.0/stock/streaming"
-        # )
 
     def handle_message(self, message):
         data = json.loads(message)
         if data.get("event")=="data":
             aaa = data.get("data")
-            # print(f"i send sth from ws.{aaa}")
             self.handle_data_callback(aaa)
-        # print(f"print from we: {data}")
-        # self.handle_data_callback(data)
-             
+
     def handle_connect(self):
         print('connected')
 
@@ -39,7 +32,6 @@ class WebSocketHandler:
         stock.on("disconnect", self.handle_disconnect)
         stock.on("error", self.handle_error)
         stock.connect()
-        # stock.connect(url="wss://api.fugle.tw/marketdata/v1.0/stock/streaming")
         stock.subscribe({
             "channel": 'trades',
             "symbol": '2330',

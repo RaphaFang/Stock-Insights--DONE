@@ -133,7 +133,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const incomingData = JSON.parse(event.data);
     console.log("Received data: ", incomingData);
 
-    const timeLabel = new Date(incomingData.current_time).toLocaleTimeString("en-US", { hour12: true });
+    // 使用start字段作为时间标签
+    const timeLabel = new Date(incomingData.start).toLocaleTimeString("en-US", { hour12: true });
 
     if (!labels.includes(timeLabel)) {
       labels.push(timeLabel);
@@ -145,9 +146,12 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    vwapPriceData.push(incomingData.vwap_price_per_sec);
-    sma5Data.push(incomingData.sma_5 || null);
-    sizePerSecData.push(incomingData.size_per_sec);
+    if (incomingData.type === "per_sec_data") {
+      vwapPriceData.push(incomingData.vwap_price_per_sec);
+      sizePerSecData.push(incomingData.size_per_sec);
+    } else if (incomingData.type === "MA_data") {
+      sma5Data.push(incomingData.sma_5 || null);
+    }
 
     // 更新图表
     priceChart.update();

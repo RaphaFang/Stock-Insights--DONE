@@ -37,7 +37,8 @@ def main():
         StructField("time", StringType(), True), 
         StructField("serial", StringType(), True),
         StructField("id", StringType(), True),
-        StructField("channel", StringType(), True)
+        StructField("channel", StringType(), True),
+        StructField("last_day_price", DoubleType(), True),
     ])
 
     spark = SparkSession.builder \
@@ -75,6 +76,7 @@ def main():
                 SF.last("time", ignorenulls=True).alias("last_data_time"),
                 SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
                 SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
+                SF.last("last_day_price", ignorenulls=True).alias("last_day_price"),
             )
             # 這會是更有效率的作法，比起在尾部加上orderby 
             window_spec = Window.partitionBy("symbol").orderBy("window.start")
@@ -97,6 +99,13 @@ def main():
                 "vwap_price_per_sec",
                 SF.when(col("initial_vwap") == 0, SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value)))
                 .otherwise(col("initial_vwap"))
+            )
+
+            result_df = result_df.withColumn(
+                "price_change_percentage",
+                SF.when(col("last_day_price") != 0, 
+                    SF.round(((col("vwap_price_per_sec") - col("last_day_price")) / col("last_day_price")) * 100, 2)
+                ).otherwise(0) 
             )
             # 下方式重新負值的機制
             # last_non_zero_sma = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
@@ -124,9 +133,6 @@ def main():
             #     broadcast_vwap.unpersist()
             #     broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_sma["vwap_price_per_sec"])
 
-
-
-
             result_df = result_df.withColumn(
                 "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
             ).select(
@@ -136,7 +142,7 @@ def main():
                 "window.end",
 
                 SF.current_timestamp().alias("current_time"),
-                "last_in_window",
+                "last_data_time",
                 "real_data_count",
                 "filled_data_count"
 
@@ -144,6 +150,9 @@ def main():
                 "vwap_price_per_sec",
                 "size_per_sec",
                 "volume_till_now",
+
+                "last_day_price",
+                "price_change_percentage"
             )
             # result_df.foreachPartition(send_partition_to_kafka)
 

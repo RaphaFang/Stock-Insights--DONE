@@ -64,7 +64,7 @@ const stockChart = new Chart(ctx, {
 });
 
 // WebSocket連接
-const ws = new WebSocket("wss://raphaelfang.com:8001/stock/v1/ws/data");
+const ws = new WebSocket("wss://raphaelfang.com/stock/v1/ws/data");
 
 ws.onmessage = function (event) {
   const incomingData = JSON.parse(event.data);

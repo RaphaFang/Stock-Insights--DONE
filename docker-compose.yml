@@ -6,7 +6,7 @@ services:
         constraints:
           - "node.hostname == ip-10-0-1-114"
     ports:
-      - "8001:8001"
+      - "8000:8000"
     dns:
       - 8.8.8.8
     networks:

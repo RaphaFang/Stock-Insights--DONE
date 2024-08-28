@@ -17,8 +17,7 @@ services:
       KAFKA_CFG_PROCESS_ROLES: "broker,controller"
       KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
       KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092 # swarm版本需要的
-      # KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092 # 本地適用
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
       KAFKA_CFG_LOG_DIRS: /bitnami/kafka/data
       KAFKA_CFG_KRAFT_MODE: "true"
@@ -33,25 +32,19 @@ services:
     # 要考慮不要設定，不然log太多
     networks:
       - kafka-net
-    # healthcheck:
-    #   test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
 
   kafka-app:
     image: raphafang/kafka-app:latest
+    # 留著本地測試用
     # build: .
-
     env_file:
       - .env
     ports:
-      - "8000:8000"
+      - "8001:8001"
     dns:
       - 8.8.8.8
     environment:
-      KAFKA_BROKER: kafka:9092 # swarm版本需要的
-      # KAFKA_BROKER: kafka:9092 # 本地適用
+      KAFKA_BROKER: kafka:9092
     deploy:
       resources:
         limits:

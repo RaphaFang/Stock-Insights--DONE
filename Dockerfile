@@ -20,7 +20,7 @@ RUN wget https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.
 RUN wget https://repo1.maven.org/maven2/org/apache/spark/spark-streaming-kafka-0-10_2.12/3.1.2/spark-streaming-kafka-0-10_2.12-3.1.2.jar -P /opt/spark/jars/
 
 COPY . .
-EXPOSE 8000
+EXPOSE 8001
 CMD ["spark-submit", "--jars", "/opt/spark/jars/spark-sql-kafka-0-10_2.12-3.1.2.jar,/opt/spark/jars/spark-streaming-kafka-0-10_2.12-3.1.2.jar", "main.py"]
 
 # RUN apt-get update && apt-get install -y \

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 import asyncio
 # from kafka import KafkaConsumer
@@ -52,8 +52,12 @@ async def websocket_endpoint(ws: WebSocket):
                 await ws.send_text(per_sec_data)
             if MA_data:
                 await ws.send_text(MA_data)
+    except WebSocketDisconnect:
+        print("WebSocket disconnected")
     except Exception as e:
         print(f"WebSocket connection error: {e}")
+        await ws.close()
+    finally:
         await ws.close()
 
 # ! 接下來考慮，lkafka這邊先多一個分區，接著我框架在多一個分區，就可以讓接收端更快

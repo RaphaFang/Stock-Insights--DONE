@@ -80,7 +80,7 @@ def send_batch_to_kafka(topic, yesterday_price):
         producer.flush()
         next = start + 1
         sleep_time = max(0, next - time.time())
-        threading.Timer(sleep_time, loop_process, [topic]).start()
+        threading.Timer(sleep_time, loop_process, [topic, yesterday_price]).start()
 
     loop_process(topic, yesterday_price)
 

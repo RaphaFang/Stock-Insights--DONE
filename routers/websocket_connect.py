@@ -46,14 +46,16 @@ async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
     try:
         while True:
-            per_sec_data = await per_sec_queue.get()
-            MA_data = await MA_queue.get()
-            if per_sec_data:
-                await ws.send_text(per_sec_data)
-            if MA_data:
-                await ws.send_text(MA_data)
-    except WebSocketDisconnect:
-        print("WebSocket disconnected")
+            try:
+                per_sec_data = await per_sec_queue.get()
+                MA_data = await MA_queue.get()
+                if per_sec_data:
+                    await ws.send_text(per_sec_data)
+                if MA_data:
+                    await ws.send_text(MA_data)
+            except WebSocketDisconnect:
+                print("WebSocket disconnected")
+                break
     except Exception as e:
         print(f"WebSocket connection error: {e}")
         await ws.close()

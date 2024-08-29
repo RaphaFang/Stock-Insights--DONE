@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -9,23 +9,37 @@
 
     <script src="/stock/v1/static/css_js_folder/js/chart.js" defer></script>
     <link rel="stylesheet" href="/stock/v1/static/css_js_folder/css/style.css" />
-    <!-- <script src="/stock/v1/static/css_js_folder/js/pre_job.js" defer></script> -->
-    <!-- <link rel="stylesheet" href="/tdt/v1/static/css_js_folder/css/attraction_style.css" /> -->
-    <!-- <link rel="stylesheet" href="/tdt/v1/static/css_js_folder/css/signin_signout_section.css" /> -->
   </head>
-  <!-- <body>
-    <canvas id="stockChart" width="1030" height="515" style="display: block; box-sizing: border-box; height: 515px; width: 1030px"></canvas>
-
+  <body>
     <h1>Stock Chart with WebSocket</h1>
-    <div class="chart-container">
-      <canvas id="priceChart"></canvas>
-    </div>
-    <div class="chart-container">
-      <canvas id="sizeChart"></canvas>
-    </div>
+    <canvas id="stockChart" width="1030" height="515" style="display: block; box-sizing: border-box; height: 515px; width: 1030px"></canvas>
+  </body>
+</html> -->
 
-    
-  </body> -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock Chart with WebSocket</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script src="/stock/v1/static/css_js_folder/js/chart.js" defer></script>
+    <link rel="stylesheet" href="/stock/v1/static/css_js_folder/css/style.css" />
+    <style>
+      .chart-container {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+      .chart-container canvas {
+        width: 100% !important;
+        height: 400px !important;
+      }
+      .chart-set {
+        margin-bottom: 50px;
+      }
+    </style>
+  </head>
   <body>
     <h1>Stock Chart with WebSocket</h1>
     <div id="chartSetsContainer"></div>

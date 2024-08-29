@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const charts = {}; // 存储每个symbol对应的图表实例
+  const charts = {}; // Store chart instances by symbol
 
   const createChartSet = (symbol) => {
     const chartSetContainer = document.createElement("div");
@@ -71,14 +71,6 @@ document.addEventListener("DOMContentLoaded", function () {
             title: {
               display: true,
               text: "Price",
-            },
-            ticks: {
-              callback: function (value) {
-                const maxValue = Math.max(...vwapPriceData);
-                const minValue = Math.min(...vwapPriceData);
-                const range = (maxValue - minValue) * 0.1;
-                return value.toFixed(2);
-              },
             },
           },
           y2: {
@@ -180,7 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
     charts[symbol] = { priceChart, sizeChart, labels, vwapPriceData, sma5Data, sizePerSecData, pricePercentageChange, priceColors };
   };
 
-  // WebSocket连接
+  // WebSocket connection
   const ws = new WebSocket("wss://raphaelfang.com/stock/v1/ws/data");
 
   ws.onopen = function () {
@@ -191,7 +183,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const incomingData = JSON.parse(event.data);
     const symbol = incomingData.symbol;
 
-    // 如果没有这个 symbol 的图表组，就创建一个
     if (!charts[symbol]) {
       createChartSet(symbol);
     }
@@ -215,9 +206,9 @@ document.addEventListener("DOMContentLoaded", function () {
       pricePercentageChange.push(incomingData.price_change_percentage);
 
       if (incomingData.price_change_percentage > 0) {
-        priceColors.push("rgba(255, 0, 0, 1)"); // 红色
+        priceColors.push("rgba(255, 0, 0, 1)");
       } else {
-        priceColors.push("rgba(0, 128, 0, 1)"); // 绿色
+        priceColors.push("rgba(0, 128, 0, 1)");
       }
 
       sizePerSecData.push(incomingData.size_per_sec);
@@ -225,7 +216,6 @@ document.addEventListener("DOMContentLoaded", function () {
       sma5Data.push(incomingData.sma_5 || null);
     }
 
-    // 更新图表
     priceChart.update();
     sizeChart.update();
   };

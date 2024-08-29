@@ -106,7 +106,5 @@ document.addEventListener("DOMContentLoaded", function () {
       sma5Data.shift();
     }
   }
-
-  // 定期限制数据点
   setInterval(limitDataPoints, 1000);
 });

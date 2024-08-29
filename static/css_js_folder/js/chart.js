@@ -90,7 +90,15 @@ document.addEventListener("DOMContentLoaded", function () {
               enabled: true,
               mode: "x",
             },
-            zoom: {
+            wheel: {
+              enabled: true,
+              mode: "x",
+            },
+            drag: {
+              enabled: true,
+              mode: "x",
+            },
+            pinch: {
               enabled: true,
               mode: "x",
             },
@@ -142,7 +150,15 @@ document.addEventListener("DOMContentLoaded", function () {
               enabled: true,
               mode: "x",
             },
-            zoom: {
+            wheel: {
+              enabled: true,
+              mode: "x",
+            },
+            drag: {
+              enabled: true,
+              mode: "x",
+            },
+            pinch: {
               enabled: true,
               mode: "x",
             },

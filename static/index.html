@@ -1,47 +1,42 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebSocket Test</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
-
-    <script src="/stock/v1/static/css_js_folder/js/chart.js" defer></script>
-    <link rel="stylesheet" href="/stock/v1/static/css_js_folder/css/style.css" />
-  </head>
-  <body>
-    <h1>Stock Chart with WebSocket</h1>
-    <canvas id="stockChart" width="1030" height="515" style="display: block; box-sizing: border-box; height: 515px; width: 1030px"></canvas>
-  </body>
-</html> -->
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stock Chart with WebSocket</title>
+    <title>Stock Charts with WebSocket</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
     <script src="/stock/v1/static/css_js_folder/js/chart.js" defer></script>
     <link rel="stylesheet" href="/stock/v1/static/css_js_folder/css/style.css" />
-    <style>
-      .chart-container {
-        width: 100%;
-        margin-bottom: 20px;
-      }
-      .chart-container canvas {
-        width: 100% !important;
-        height: 400px !important;
-      }
-      .chart-set {
-        margin-bottom: 50px;
-      }
-    </style>
   </head>
   <body>
-    <h1>Stock Chart with WebSocket</h1>
-    <div id="chartSetsContainer"></div>
+    <div id="chartSetsContainer">
+      <!-- 每个symbol对应的图表集 -->
+      <div class="chart-set" id="set_2330">
+        <h2>2330</h2>
+        <canvas id="priceChart_2330"></canvas>
+        <canvas id="sizeChart_2330"></canvas>
+      </div>
+      <div class="chart-set" id="set_0050">
+        <h2>0050</h2>
+        <canvas id="priceChart_0050"></canvas>
+        <canvas id="sizeChart_0050"></canvas>
+      </div>
+      <div class="chart-set" id="set_00670L">
+        <h2>00670L</h2>
+        <canvas id="priceChart_00670L"></canvas>
+        <canvas id="sizeChart_00670L"></canvas>
+      </div>
+      <div class="chart-set" id="set_2454">
+        <h2>2454</h2>
+        <canvas id="priceChart_2454"></canvas>
+        <canvas id="sizeChart_2454"></canvas>
+      </div>
+      <div class="chart-set" id="set_6115">
+        <h2>6115</h2>
+        <canvas id="priceChart_6115"></canvas>
+        <canvas id="sizeChart_6115"></canvas>
+      </div>
+    </div>
   </body>
 </html>

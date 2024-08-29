@@ -11,7 +11,7 @@ import time
 
 create_kafka_topic('kafka_raw_data', num_partitions=5)
 create_kafka_topic('kafka_per_sec_data', num_partitions=1)
-create_kafka_topic('kafka_per_sec_data_partition', num_partitions=5)
+# create_kafka_topic('kafka_per_sec_data_partition', num_partitions=5)
 create_kafka_topic('kafka_MA_data', num_partitions=1)
 
 # time.sleep(30)
@@ -34,7 +34,7 @@ def main():
     # 已經送到 fastapi ws
 
     # 第3.2站，spark處理的kafka_per_sec_data收到，送到kafka_per_sec_data_partition
-    kafka_per_sec_data_producer()
+    # kafka_per_sec_data_producer()
 
     # 第4站，kafka_per_sec_data_partition資料送到spark作第二次處理
     # spark 資料已經處理好了，傳遞到kafka_MA_data

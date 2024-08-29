@@ -37,7 +37,7 @@ def main():
     kafka_df = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", "kafka:9092") \
-        .option("subscribe", "kafka_per_sec_data_partition") \
+        .option("subscribe", "kafka_per_sec_data") \
         .option("startingOffsets", "earliest") \
         .option("maxOffsetsPerTrigger", "2000") \
         .option("failOnDataLoss", "false") \

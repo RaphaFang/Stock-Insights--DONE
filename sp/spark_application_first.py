@@ -144,7 +144,7 @@ def main():
                 SF.current_timestamp().alias("current_time"),
                 "last_data_time",
                 "real_data_count",
-                "filled_data_count"
+                "filled_data_count",
 
                 "real_or_filled",
                 "vwap_price_per_sec",

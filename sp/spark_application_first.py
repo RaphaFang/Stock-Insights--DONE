@@ -44,9 +44,15 @@ def main():
     spark = SparkSession.builder \
         .appName("spark_per_sec_data") \
         .master("local[2]") \
-        .config("spark.executor.cores", "2") \
+        .config("spark.sql.streaming.pipelining.enabled", "true") \
+        .config("spark.sql.streaming.pipelining.batchSize", "500") \
+        .config("spark.sql.streaming.stateRebalancing.enabled", "true") \
+        .config("spark.sql.streaming.offset.management.enabled", "true") \
+        .config("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.HDFSBackedStateStoreProvider") \
         .getOrCreate()
-        # .config("spark.cores.max", "2") \
+        # 確保有開啟 State Rebalancing 和 Enhanced Offset Management
+        # 使用 pipelining
+        # .config("spark.executor.cores", "2") \
 
     b_vwap = 50
     broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
@@ -152,7 +158,7 @@ def main():
                 "volume_till_now",
 
                 "yesterday_price",
-                "price_change_percentage"
+                "price_change_percentage",
             )
             # result_df.foreachPartition(send_partition_to_kafka)
 

@@ -8,22 +8,35 @@ def main():
     schema = StructType([
         StructField("symbol", StringType(), True),
         StructField("type", StringType(), True),
+        StructField("start", TimestampType(), True),
+        StructField("end", TimestampType(), True),
+
+        StructField("current_time", TimestampType(), True),
+        StructField("last_data_time", TimestampType(), True),
+        StructField("real_data_count", IntegerType(), True),
+        StructField("filled_data_count", IntegerType(), True),
+
         StructField("real_or_filled", StringType(), True),
         StructField("vwap_price_per_sec", DoubleType(), True),
         StructField("size_per_sec", IntegerType(), True),
-        StructField("last_data_time", TimestampType(), True),
-        StructField("start", TimestampType(), True),
-        StructField("end", TimestampType(), True),
-        StructField("current_time", TimestampType(), True),
-        StructField("real_data_count", IntegerType(), True),
-        StructField("filled_data_count", IntegerType(), True)
+        StructField("volume_till_now", IntegerType(), True),
+
+        StructField("yesterday_price", DoubleType(), True),
+        StructField("price_change_percentage", DoubleType(), True),
     ])
 
     spark = SparkSession.builder \
         .appName("spark_MA_data") \
         .master("local[2]") \
-        .config("spark.executor.cores", "2") \
+        .config("spark.sql.streaming.pipelining.enabled", "true") \
+        .config("spark.sql.streaming.pipelining.batchSize", "500") \
+        .config("spark.sql.streaming.stateRebalancing.enabled", "true") \
+        .config("spark.sql.streaming.offset.management.enabled", "true") \
+        .config("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.HDFSBackedStateStoreProvider") \
         .getOrCreate()
+        # 確保有開啟 State Rebalancing 和 Enhanced Offset Management
+        # 使用 pipelining
+        # .config("spark.executor.cores", "2") \
     
     b_5ma = 100
     b_15ma = 200
@@ -66,8 +79,9 @@ def main():
         current_broadcast_value = broadcast.value
         sma_df = sma_df.withColumn(
             "initial_sma",
-            SF.when(col('count_of_vwap') != 0, col('sum_of_vwap') / col('count_of_vwap'))
-            .otherwise(0)
+            SF.when(col('count_of_vwap') != 0,
+                SF.round(col('sum_of_vwap') / col('count_of_vwap'), 2)
+            ).otherwise(0)
         )
         sma_df = sma_df.withColumn(
             "prev_sma", SF.lag("initial_sma", 1).over(window_spec)
@@ -77,7 +91,6 @@ def main():
             SF.when(col("initial_sma") == 0, SF.coalesce(col("prev_sma"), SF.lit(current_broadcast_value)))
             .otherwise(col("initial_sma"))
         )
-
 
         sma_df = sma_df.select(            
             col("symbol"),

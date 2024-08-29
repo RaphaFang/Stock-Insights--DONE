@@ -121,8 +121,6 @@ document.addEventListener("DOMContentLoaded", function () {
         ],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
         scales: {
           y: {
             type: "linear",
@@ -130,15 +128,6 @@ document.addEventListener("DOMContentLoaded", function () {
             title: {
               display: true,
               text: "Size",
-            },
-            suggestedMax: 10, // 初始建议最大值
-            ticks: {
-              beginAtZero: true,
-              callback: function (value) {
-                // 重新设置最大值，根据数据动态调整
-                if (value > this.max) this.max = value;
-                return value;
-              },
             },
           },
           x: {
@@ -199,6 +188,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   ws.onmessage = function (event) {
     const incomingData = JSON.parse(event.data);
+    console.log("Received Data:", incomingData); // 调试信息，确认收到的数据
+
     const symbol = incomingData.symbol;
 
     if (!charts[symbol]) {
@@ -209,6 +200,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const chartData = charts[symbol];
 
     const timeLabel = new Date(incomingData.start).toLocaleTimeString("en-US", { hour12: true });
+    console.log("Time Label:", timeLabel); // 调试信息，确认时间标签
 
     if (chartData.labels.length > 50) {
       chartData.labels.shift();
@@ -235,7 +227,7 @@ document.addEventListener("DOMContentLoaded", function () {
       chartData.sma5Data.push(incomingData.sma_5 || null);
     }
 
-    // 更新图表
+    console.log("Updating charts for symbol:", symbol); // 调试信息，确认图表更新
     chartData.priceChart.update();
     chartData.sizeChart.update();
   };

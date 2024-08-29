@@ -36,6 +36,7 @@ def main():
         .getOrCreate()
         # 確保有開啟 State Rebalancing 和 Enhanced Offset Management
         # 使用 pipelining
+        # 發現都沒用
         # .config("spark.executor.cores", "2") \
     
     b_5ma = 100
@@ -60,9 +61,9 @@ def main():
 
     # groupBy，spark的groupBy會需要透過Shuffle來處理資料，而Shuffle很消耗 cpu 以及 io，因為他要把資料傳遞到不同的節點，以及全局運算資料
     def calculate_sma(df, window_duration, column_name, broadcast):
-        # df_with_watermark = df.withWatermark("start", "15 seconds")
-        # sma_df = df_with_watermark.groupBy(
-        sma_df = df.groupBy(
+        df_with_watermark = df.withWatermark("start", "15 seconds")
+        sma_df = df_with_watermark.groupBy(
+        # sma_df = df.groupBy(
             SF.window(col("start"), f"{window_duration} seconds", "1 second"), col("symbol")
         ).agg(
             SF.sum(SF.when(col("size_per_sec") != 0, col("vwap_price_per_sec")).otherwise(0)).alias('sum_of_vwap'),

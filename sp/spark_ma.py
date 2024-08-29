@@ -32,7 +32,9 @@ def main():
         .config("spark.sql.streaming.pipelining.batchSize", "500") \
         .config("spark.sql.streaming.stateRebalancing.enabled", "true") \
         .config("spark.sql.streaming.offset.management.enabled", "true") \
-        .config("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.HDFSBackedStateStoreProvider") \
+        .config("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider") \
+        .config("spark.sql.streaming.stateStore.rocksdb.changelogCheckpointing.enabled", "true") \
+        .config("spark.locality.wait", "10s") \
         .getOrCreate()
         # 確保有開啟 State Rebalancing 和 Enhanced Offset Management
         # 使用 pipelining

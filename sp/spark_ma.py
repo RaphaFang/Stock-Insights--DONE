@@ -37,12 +37,12 @@ def main():
     kafka_df = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", "kafka:9092") \
-        .option("subscribe", "kafka_per_sec_data_partition") \
-        .option("startingOffsets", "earliest") \
+        .option("subscribe", "kafka_per_sec_data") \
+        .option("startingOffsets", "latest") \
         .option("maxOffsetsPerTrigger", "2000") \
         .option("failOnDataLoss", "false") \
         .load()
-        # .option("subscribe", "kafka_per_sec_data") \
+        # .option("subscribe", "kafka_per_sec_data_partition") \
     
 
     # groupBy，spark的groupBy會需要透過Shuffle來處理資料，而Shuffle很消耗 cpu 以及 io，因為他要把資料傳遞到不同的節點，以及全局運算資料

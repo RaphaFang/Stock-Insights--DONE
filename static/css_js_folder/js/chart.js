@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
             borderColor: "rgba(255, 99, 132, 1)",
             borderWidth: 2,
             fill: false,
+            spanGaps: true,
             yAxisID: "y1",
           },
           {
@@ -30,6 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
             borderColor: "rgba(75, 192, 192, 1)",
             borderWidth: 2,
             fill: false,
+            spanGaps: true,
             yAxisID: "y1",
           },
           {
@@ -54,6 +56,14 @@ document.addEventListener("DOMContentLoaded", function () {
               display: true,
               text: "Price",
             },
+            grid: {
+              display: false, // Remove horizontal grid lines
+            },
+            ticks: {
+              callback: function (value) {
+                return value.toFixed(2);
+              },
+            },
           },
           y2: {
             type: "linear",
@@ -61,6 +71,9 @@ document.addEventListener("DOMContentLoaded", function () {
             title: {
               display: true,
               text: "Percentage Change (%)",
+            },
+            grid: {
+              display: false, // Remove vertical grid lines
             },
             ticks: {
               min: -10,
@@ -81,6 +94,9 @@ document.addEventListener("DOMContentLoaded", function () {
             title: {
               display: true,
               text: "Time",
+            },
+            grid: {
+              display: false, // Remove vertical grid lines
             },
           },
         },
@@ -129,6 +145,9 @@ document.addEventListener("DOMContentLoaded", function () {
               display: true,
               text: "Size",
             },
+            grid: {
+              display: false, // Remove horizontal grid lines
+            },
           },
           x: {
             type: "time",
@@ -141,6 +160,9 @@ document.addEventListener("DOMContentLoaded", function () {
             title: {
               display: true,
               text: "Time",
+            },
+            grid: {
+              display: false, // Remove vertical grid lines
             },
           },
         },
@@ -199,6 +221,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const chartData = charts[symbol];
 
+    // If `yesterday_price` is available, set the middle of the y-axis
+    if (incomingData.yesterday_price) {
+      const yesterdayPrice = incomingData.yesterday_price;
+      chartData.priceChart.options.scales.y1.min = yesterdayPrice - yesterdayPrice * 0.1;
+      chartData.priceChart.options.scales.y1.max = yesterdayPrice + yesterdayPrice * 0.1;
+      chartData.priceChart.options.scales.y1.ticks = {
+        stepSize: yesterdayPrice * 0.02,
+      };
+    }
+
     const timeLabel = new Date(incomingData.start).toLocaleTimeString("en-US", { hour12: true });
     console.log("Time Label:", timeLabel); // 调试信息，确认时间标签
 
@@ -223,7 +255,7 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         chartData.priceColors.push("rgba(0, 128, 0, 1)");
       }
-    } else if (incomingData.type === "MA_data") {
+    } else if (incomingData.type === "MA_data" && incomingData.MA_type === "5_MA_data") {
       chartData.sma5Data.push(incomingData.sma_5 || null);
     }
 

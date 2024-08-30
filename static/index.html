@@ -3,41 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stock Charts with WebSocket</title>
+    <title>WebSocket Test</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
     <script src="/stock/v1/static/css_js_folder/js/chart.js" defer></script>
-    <!-- <link rel="stylesheet" href="/stock/v1/static/css_js_folder/css/style.css" /> -->
+    <!-- <script src="/static/css_js_folder/js/chart_copy.js" defer></script> -->
   </head>
   <body>
-    <div id="chartSetsContainer">
-      <!-- 每个symbol对应的图表集 -->
-      <div class="chart-set" id="set_2330">
-        <h2>2330</h2>
-        <canvas id="priceChart_2330"></canvas>
-        <canvas id="sizeChart_2330" height="100"></canvas>
-      </div>
-      <div class="chart-set" id="set_0050">
-        <h2>0050</h2>
-        <canvas id="priceChart_0050"></canvas>
-        <canvas id="sizeChart_0050" height="100"></canvas>
-      </div>
-      <div class="chart-set" id="set_00670L">
-        <h2>00670L</h2>
-        <canvas id="priceChart_00670L"></canvas>
-        <canvas id="sizeChart_00670L" height="100"></canvas>
-      </div>
-      <div class="chart-set" id="set_2454">
-        <h2>2454</h2>
-        <canvas id="priceChart_2454"></canvas>
-        <canvas id="sizeChart_2454" height="100"></canvas>
-      </div>
-      <div class="chart-set" id="set_6115">
-        <h2>6115</h2>
-        <canvas id="priceChart_6115"></canvas>
-        <canvas id="sizeChart_6115" height="100"></canvas>
-      </div>
+    <canvas id="stockChart" width="1030" height="515" style="display: block; box-sizing: border-box; height: 515px; width: 1030px"></canvas>
+
+    <h1>Stock Chart with WebSocket</h1>
+    <!-- <div class="chart-container">
+      <canvas id="priceChart"></canvas>
     </div>
+    <div class="chart-container">
+      <canvas id="sizeChart"></canvas>
+    </div> -->
   </body>
 </html>

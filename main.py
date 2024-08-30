@@ -48,19 +48,19 @@ def sync_main():
     create_consumer_by_partition('kafka_MA_data')
 
 
-async def async_main():
-    pool = await build_async_sql_pool()
-    MA_queue = Queue()
-    per_sec_queue = Queue()
+# async def async_main():
+#     pool = await build_async_sql_pool()
+#     MA_queue = Queue()
+#     per_sec_queue = Queue()
 
-    await asyncio.gather(
-        MA_data_consumer(queue=per_sec_queue, topic='kafka_per_sec_data', partition=None, prefix='sec'),
-        mysql_writer(per_sec_queue, pool, 'sec'),
+#     await asyncio.gather(
+#         MA_data_consumer(queue=per_sec_queue, topic='kafka_per_sec_data', partition=None, prefix='sec'),
+#         mysql_writer(per_sec_queue, pool, 'sec'),
 
-        MA_data_consumer(queue=MA_queue, topic='kafka_MA_data', partition=None, prefix='MA'),
-        mysql_writer(MA_queue, pool, 'MA')
-    )
+#         MA_data_consumer(queue=MA_queue, topic='kafka_MA_data', partition=None, prefix='MA'),
+#         mysql_writer(MA_queue, pool, 'MA')
+#     )
 
 if __name__ == "__main__":
-    asyncio.run(async_main())
+    # asyncio.run(async_main())
     sync_main()

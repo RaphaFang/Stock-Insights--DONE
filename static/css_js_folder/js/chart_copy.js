@@ -1,42 +1,29 @@
 document.addEventListener("DOMContentLoaded", function () {
   const labels = [];
   const vwapPriceData = [];
-  const sma5Data = [];
   const sizePerSecData = [];
-  const pricePercentageChange = [];
-  const priceColors = [];
 
   const ctx = document.getElementById("stockChart").getContext("2d");
   const stockChart = new Chart(ctx, {
-    type: "line",
+    type: "bar",
     data: {
       labels: labels,
       datasets: [
         {
-          label: "VWAP Price per Second",
-          data: vwapPriceData,
-          borderColor: function (context) {
-            const index = context.dataIndex;
-            return priceColors[index];
-          },
-          borderWidth: 2,
-          fill: false,
-          yAxisID: "y1",
-        },
-        {
-          label: "5 Period SMA",
-          data: sma5Data,
-          borderColor: "rgba(75, 192, 192, 1)",
-          borderWidth: 2,
-          fill: false,
-          yAxisID: "y1",
-        },
-        {
           label: "Size per Second",
           data: sizePerSecData,
           backgroundColor: "rgba(54, 162, 235, 0.5)",
-          type: "bar",
           yAxisID: "y",
+          type: "bar",
+        },
+        {
+          label: "VWAP Price per Second",
+          data: vwapPriceData,
+          borderColor: "rgba(255, 99, 132, 1)",
+          borderWidth: 2,
+          fill: false,
+          yAxisID: "y1",
+          type: "line",
         },
       ],
     },
@@ -46,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
           type: "linear",
           position: "left",
           min: 0,
-          max: 1000, // 根据实际数据范围调整
+          max: 200,
           title: {
             display: true,
             text: "Size",
@@ -54,27 +41,12 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         y1: {
           type: "linear",
-          position: "left",
-          min: 0,
-          max: 1000, // 设置上下10%的波动范围
+          position: "right",
+          min: 90,
+          max: 110,
           title: {
             display: true,
             text: "Price",
-          },
-        },
-        y2: {
-          type: "linear",
-          position: "right",
-          min: -10,
-          max: 10,
-          title: {
-            display: true,
-            text: "Percentage Change (%)",
-          },
-          ticks: {
-            callback: function (value) {
-              return value + "%";
-            },
           },
         },
         x: {
@@ -88,24 +60,6 @@ document.addEventListener("DOMContentLoaded", function () {
           title: {
             display: true,
             text: "Time",
-          },
-        },
-      },
-      plugins: {
-        zoom: {
-          pan: {
-            enabled: true,
-            mode: "x",
-          },
-          zoom: {
-            wheel: {
-              enabled: true,
-              mode: "x",
-            },
-            pinch: {
-              enabled: true,
-              mode: "x",
-            },
           },
         },
       },
@@ -125,30 +79,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const timeLabel = new Date(incomingData.start).toLocaleTimeString("en-US", { hour12: false });
 
+    // 限制数据点数量
     if (labels.length > 50) {
       labels.shift();
       vwapPriceData.shift();
       sizePerSecData.shift();
-      sma5Data.shift();
-      pricePercentageChange.shift();
-      priceColors.shift();
     }
 
     labels.push(timeLabel);
     vwapPriceData.push(incomingData.vwap_price_per_sec);
     sizePerSecData.push(incomingData.size_per_sec);
-    pricePercentageChange.push(incomingData.price_change_percentage);
-
-    // 设置线条颜色
-    if (incomingData.price_change_percentage > 0) {
-      priceColors.push("rgba(255, 0, 0, 1)"); // 红色
-    } else {
-      priceColors.push("rgba(0, 128, 0, 1)"); // 绿色
-    }
-
-    if (incomingData.type === "MA_data" && incomingData.MA_type === "5_MA_data") {
-      sma5Data.push(incomingData.sma_5);
-    }
 
     // 更新图表
     stockChart.update();

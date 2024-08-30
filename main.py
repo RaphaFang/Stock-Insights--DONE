@@ -45,17 +45,22 @@ def sync_main():
     # 第5站，kafka_processed_data 資料送到 fastapi ws
 
     # 測試區
-    create_consumer_by_partition('kafka_per_sec_data')
+    # create_consumer_by_partition('kafka_per_sec_data')
 
 
 async def async_main():
     pool = await build_async_sql_pool()
     MA_queue = Queue()
+    per_sec_queue = Queue()
+
     await asyncio.gather(
+        MA_data_consumer(per_sec_queue, 'kafka_per_sec_data'),
+        mysql_writer(per_sec_queue, pool, 'sec'),
+
         MA_data_consumer(MA_queue, 'kafka_MA_data'),
-        mysql_writer(MA_queue, pool)
+        mysql_writer(MA_queue, pool, 'MA')
     )
 
 if __name__ == "__main__":
-    sync_main()
     asyncio.run(async_main())
+    sync_main()

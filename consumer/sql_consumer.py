@@ -25,9 +25,9 @@ async def build_async_sql_pool():
         maxsize=10,
     )
 
-async def check_today_table_exists(pool):
+async def check_today_table_exists(pool, prefix):
     today = datetime.now().strftime('%Y_%m_%d')
-    table_name = f"table_{today}"
+    table_name = f"{prefix}_table_{today}"
 
     async with pool.acquire() as conn:
         async with conn.cursor() as cursor:
@@ -78,8 +78,8 @@ def create_consumer(kafka_config):
             print(f"Kafka consumer creation failed: {e}. Retrying in 5 seconds...")
             time.sleep(5)
 
-async def mysql_writer(queue, pool):
-    table_name = await check_today_table_exists(pool)
+async def mysql_writer(queue, pool, prefix):
+    table_name = await check_today_table_exists(pool, prefix)
     batch_data = []
 
     while True:

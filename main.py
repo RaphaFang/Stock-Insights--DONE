@@ -54,10 +54,10 @@ async def async_main():
     per_sec_queue = Queue()
 
     await asyncio.gather(
-        MA_data_consumer(per_sec_queue, 'kafka_per_sec_data'),
+        MA_data_consumer(queue=per_sec_queue, topic='kafka_per_sec_data', partition=None, prefix='sec'),
         mysql_writer(per_sec_queue, pool, 'sec'),
 
-        MA_data_consumer(MA_queue, 'kafka_MA_data'),
+        MA_data_consumer(queue=MA_queue, topic='kafka_MA_data', partition=None, prefix='MA'),
         mysql_writer(MA_queue, pool, 'MA')
     )
 

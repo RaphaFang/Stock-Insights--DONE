@@ -6,9 +6,16 @@ import json
 from datetime import datetime
 import time
 
-kafka_config = {
+MA_config = {
     'bootstrap.servers': 'kafka:9092',
-    'group.id': 'MA_kafka_side_group',
+    'group.id': 'MA_to_sql_group',
+    'auto.offset.reset': 'latest',
+    'session.timeout.ms': 30000,
+    'max.poll.interval.ms': 60000
+}
+sec_config = {
+    'bootstrap.servers': 'kafka:9092',
+    'group.id': 'sec_to_sql_group',
     'auto.offset.reset': 'latest',
     'session.timeout.ms': 30000,
     'max.poll.interval.ms': 60000
@@ -28,43 +35,75 @@ async def build_async_sql_pool():
 async def check_today_table_exists(pool, prefix):
     today = datetime.now().strftime('%Y_%m_%d')
     table_name = f"{prefix}_table_{today}"
-
     async with pool.acquire() as conn:
         async with conn.cursor() as cursor:
-            await cursor.execute(f"""
-                CREATE TABLE IF NOT EXISTS {table_name} (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    symbol VARCHAR(10),
-                    type VARCHAR(50),
-                    MA_type VARCHAR(50),
-                    start DATETIME,
-                    end DATETIME,
-                    current_time DATETIME,
-                    first_in_window DATETIME,
-                    last_in_window DATETIME,
-                    real_data_count INT,
-                    filled_data_count INT,
-                    sma_5 FLOAT,
-                    sum_of_vwap FLOAT,
-                    count_of_vwap INT,
-                    data_count INT)
-            """)
+            if prefix == "MA":
+                await cursor.execute(f"""
+                    CREATE TABLE IF NOT EXISTS {table_name} (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        symbol VARCHAR(10),
+                        type VARCHAR(50),
+                        MA_type VARCHAR(50),
+                        start DATETIME,
+                        end DATETIME,
+                        current_time DATETIME,
+                        first_in_window DATETIME,
+                        last_in_window DATETIME,
+                        real_data_count INT,
+                        filled_data_count INT,
+                        sma_5 FLOAT,
+                        sum_of_vwap FLOAT,
+                        count_of_vwap INT,
+                        data_count INT
+                    )
+                """)
+            elif prefix == "sec":
+                await cursor.execute(f"""
+                    CREATE TABLE IF NOT EXISTS {table_name} (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        symbol VARCHAR(10),
+                        type VARCHAR(50),
+                        start DATETIME,
+                        end DATETIME,
+                        current_time DATETIME,
+                        last_data_time DATETIME,
+                        real_data_count INT,
+                        filled_data_count INT,
+                        real_or_filled VARCHAR(10),
+                        vwap_price_per_sec FLOAT,
+                        size_per_sec INT,
+                        volume_till_now INT,
+                        yesterday_price FLOAT,
+                        price_change_percentage FLOAT
+                    )
+                """)
             await conn.commit()
     return table_name
 
-async def batch_insert(pool, table_name, batch_data):
+
+async def batch_insert(pool, table_name, batch_data, prefix):
     if not batch_data:
         return
 
     async with pool.acquire() as conn:
         async with conn.cursor() as cursor:
-            insert_query = f"""
-            INSERT INTO {table_name} (
-                symbol, type, MA_type, start, end, current_time, 
-                first_in_window, last_in_window, real_data_count, 
-                filled_data_count, sma_5, sum_of_vwap, count_of_vwap, data_count
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
+            if prefix == "MA":
+                insert_query = f"""
+                INSERT INTO {table_name} (
+                    symbol, type, MA_type, start, end, current_time, 
+                    first_in_window, last_in_window, real_data_count, 
+                    filled_data_count, sma_5, sum_of_vwap, count_of_vwap, data_count
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+            elif prefix == "sec":
+                insert_query = f"""
+                INSERT INTO {table_name} (
+                    symbol, type, start, end, current_time, last_data_time,
+                    real_data_count, filled_data_count, real_or_filled,
+                    vwap_price_per_sec, size_per_sec, volume_till_now,
+                    yesterday_price, price_change_percentage
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
             await cursor.executemany(insert_query, batch_data)
             await conn.commit()
 
@@ -87,15 +126,19 @@ async def mysql_writer(queue, pool, prefix):
             data = await queue.get()
             batch_data.append(data)
             if len(batch_data) >= 10:  
-                await batch_insert(pool, table_name, batch_data)
+                await batch_insert(pool, table_name, batch_data, prefix)
                 batch_data.clear()
 
             await asyncio.sleep(1)  
         except Exception as e:
             print(f"Error in MySQL writer: {e}")
 
-async def MA_data_consumer(queue, topic, partition=None):
-    consumer = create_consumer(kafka_config)
+async def MA_data_consumer(queue, topic, prefix, partition=None):
+    if prefix=="sec":
+        consumer = create_consumer(sec_config)
+    elif prefix=="MA":
+        consumer = create_consumer(MA_config)
+
     if partition is not None:
         topic_partition = TopicPartition(topic, partition)
         consumer.assign([topic_partition])
@@ -118,7 +161,7 @@ async def MA_data_consumer(queue, topic, partition=None):
                         break
                 raw = json.loads(msg.value().decode("utf-8"))
 
-                print(f"got MA_data {raw.get('symbol')}")
+                print(f"got {topic}: {raw.get('symbol')}")
                 await queue.put((
                     raw.get('symbol'), raw.get('type'), raw.get('MA_type'),
                     raw.get('start'), raw.get('end'), raw.get('current_time'),

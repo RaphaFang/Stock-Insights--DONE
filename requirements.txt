@@ -5,6 +5,6 @@ requests
 aiohttp
 pyspark==3.5.0
 schedule
-
+aiomysql
 # asyncpg
 # aiokafka

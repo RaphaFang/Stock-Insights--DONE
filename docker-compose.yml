@@ -55,15 +55,15 @@ services:
           - "node.hostname == ip-10-0-1-138"
     networks:
       - kafka-net
-      - aws-vpc-net
+      - aws-net
 
 networks:
   kafka-net:
     driver: overlay
     attachable: true
-  aws-vpc-net:
+  aws-net:
     external: true
-    name: vpc-0732371fa974ce172
+    # name: vpc-0732371fa974ce172 # 這根本用不了
 
 volumes:
   kafka_data:

@@ -10,18 +10,19 @@ services:
     dns:
       - 8.8.8.8
     networks:
-      - kafka-net
+      - macvlan-kafka-net
     # volumes:
     #   - /home/ubuntu/WH/tdt/secrets:/app/secrets
 
+networks:
+  macvlan-kafka-net:
+    name: macvlan-kafka-net
+    external: true
+# 本地------------------------------------------
 # networks:
 #   kafka-net:
+#     name: kafka_stack_kafka-net
 #     external: true
-# 本地------------------------------------------
-networks:
-  kafka-net:
-    name: kafka_stack_kafka-net
-    external: true
 # environment:
 #   - SQL_USER=${SQL_USER}
 #   - SQL_PASSWORD=${SQL_PASSWORD}

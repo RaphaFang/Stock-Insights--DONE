@@ -56,14 +56,22 @@ services:
           - "node.hostname == ip-10-0-1-138"
     networks:
       - kafka-net
-      - external-net
+      - aws-internal-net
 
 networks:
   kafka-net:
     driver: overlay
     attachable: true
-  external-net: # 新增外部網絡配置
+  aws-internal-net:
     external: true
+
+  # aws-internal-net:
+  #   driver: overlay
+  #   attachable: true
+  #   ipam:
+  #     driver: default
+  #     config:
+  #       - subnet: 10.0.0.0/16
 volumes:
   kafka_data:
     driver: local

@@ -32,7 +32,7 @@ services:
       - kafka_data:/bitnami/kafka
     # 要考慮不要設定，不然log太多
     networks:
-      - kafka-net
+      - macvlan-kafka-net
 
   kafka-app:
     image: raphafang/kafka-app:latest
@@ -55,23 +55,13 @@ services:
         constraints:
           - "node.hostname == ip-10-0-1-138"
     networks:
-      - kafka-net
-      - aws-internal-net
+      - macvlan-kafka-net
 
 networks:
-  kafka-net:
-    driver: overlay
-    attachable: true
-  aws-internal-net:
+  macvlan-kafka-net:
+    name: macvlan-kafka-net
     external: true
 
-  # aws-internal-net:
-  #   driver: overlay
-  #   attachable: true
-  #   ipam:
-  #     driver: default
-  #     config:
-  #       - subnet: 10.0.0.0/16
 volumes:
   kafka_data:
     driver: local
@@ -79,3 +69,9 @@ volumes:
 # networks:
 #   kafka-net:
 #     driver: bridge
+
+# 已經取代------------------------------------------
+# networks:
+#   kafka-net:
+#     driver: overlay
+#     attachable: true

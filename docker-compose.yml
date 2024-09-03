@@ -56,11 +56,14 @@ services:
           - "node.hostname == ip-10-0-1-138"
     networks:
       - kafka-net
+      - external-net
 
 networks:
   kafka-net:
     driver: overlay
     attachable: true
+  external-net: # 新增外部網絡配置
+    external: true
 volumes:
   kafka_data:
     driver: local

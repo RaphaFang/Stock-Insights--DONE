@@ -52,3 +52,4 @@ class WebSocketHandler:
             "channel": 'trades',
             "symbol": '6115',
         })
+

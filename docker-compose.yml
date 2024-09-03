@@ -1,7 +1,7 @@
 services:
   kafka:
     image: "bitnami/kafka:latest"
-    container_name: kafka
+    # container_name: kafka
     deploy:
       resources:
         limits:
@@ -51,9 +51,9 @@ services:
         limits:
           cpus: "1.5"
           memory: 3G
-    placement:
-      constraints:
-        - "node.hostname == ip-10-0-1-138"
+      placement:
+        constraints:
+          - "node.hostname == ip-10-0-1-138"
     networks:
       - kafka-net
 

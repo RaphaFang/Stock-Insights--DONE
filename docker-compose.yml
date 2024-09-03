@@ -10,13 +10,17 @@ services:
     dns:
       - 8.8.8.8
     networks:
-      - macvlan-kafka-net
+      - kafka-net
+      - aws-net
     # volumes:
     #   - /home/ubuntu/WH/tdt/secrets:/app/secrets
 
 networks:
-  macvlan-kafka-net:
-    name: macvlan-kafka-net
+  kafka-net:
+    name: kafka_stack_kafka-net
+    external: true
+  aws-net:
+    name: aws-net
     external: true
 # 本地------------------------------------------
 # networks:

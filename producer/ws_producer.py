@@ -50,7 +50,7 @@ async def heartbeat_data_to_batch(msg_queue, stock_to_partition):
 async def create_producer():
     producer = None
     try:
-        producer = AIOKafkaProducer(bootstrap_servers='kafka:9092')
+        producer = AIOKafkaProducer(bootstrap_servers='10.0.1.138:9092')
         await producer.start()
         logging.info("Producer lunched, from ws_producer create_producer()")
         return producer

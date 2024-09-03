@@ -94,7 +94,7 @@ async def create_consumer(topic):
         try:
             consumer = AIOKafkaConsumer(
                 topic,
-                bootstrap_servers='kafka:9092',
+                bootstrap_servers='10.0.1.138:9092',
                 group_id=f'{topic}_to_sql_group',
                 auto_offset_reset='latest',
                 session_timeout_ms=30000,

@@ -12,13 +12,13 @@ services:
     ports:
       - "9092:9092"
       - "9093:9093"
-    network_mode: host # 使用主機網絡模式
+    network_mode: host
     environment:
       KAFKA_CFG_NODE_ID: "1"
       KAFKA_CFG_PROCESS_ROLES: "broker,controller"
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093" # 使用 localhost 或主機內部名稱
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@10.0.1.138:9093"
       KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092 # 修改為可被其他容器訪問的方式
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://10.0.1.138:9092
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
       KAFKA_CFG_LOG_DIRS: /bitnami/kafka/data
       KAFKA_CFG_KRAFT_MODE: "true"
@@ -37,11 +37,11 @@ services:
       - .env
     ports:
       - "8001:8001"
-    network_mode: host # 使用主機網絡模式
+    network_mode: host
     dns:
       - 8.8.8.8
     environment:
-      KAFKA_BROKER: localhost:9092 # 使用 localhost 作為 Kafka 的 broker
+      KAFKA_BROKER: 10.0.1.138:9092
     deploy:
       resources:
         limits:

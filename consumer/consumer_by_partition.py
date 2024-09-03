@@ -11,7 +11,7 @@ async def create_consumer(topic):
         try:
             consumer = AIOKafkaConsumer(
                 topic,
-                bootstrap_servers='kafka:9092',
+                bootstrap_servers='10.0.1.138:9092',
                 group_id='testing_group',
                 auto_offset_reset='earliest',
             )

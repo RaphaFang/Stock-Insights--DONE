@@ -10,6 +10,7 @@ MA_queue = asyncio.Queue()
 
 headers = {"Content-Type": "application/json; charset=utf-8"}
 
+# !這邊應該要修正，因為好像會不斷重新建立 consumer
 async def per_sec_consumer_loop(topic_name):
     # 用一般的KafkaConsumer會導致組塞
     consumer = AIOKafkaConsumer(
@@ -25,6 +26,7 @@ async def per_sec_consumer_loop(topic_name):
             await per_sec_queue.put(message.value.decode('utf-8'))
     finally:
         await consumer.stop()
+# !這邊應該要修正，因為好像會不斷重新建立 consumer
 
 async def MA_consumer_loop(topic_name):
     consumer = AIOKafkaConsumer(

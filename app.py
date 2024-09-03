@@ -20,6 +20,7 @@ app.mount("/stock/v1/static", StaticFiles(directory='static'), name="static")
 async def startup_event():
     # loop = asyncio.get_event_loop()
     # loop.create_task(kafka_consumer_loop("kafka_per_sec_data"))
+    # !這邊應該要修正，因為好像會不斷重新建立 consumer
     asyncio.create_task(per_sec_consumer_loop("kafka_per_sec_data"))
     asyncio.create_task(MA_consumer_loop("kafka_MA_data"))
 

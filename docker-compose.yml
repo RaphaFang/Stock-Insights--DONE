@@ -26,7 +26,7 @@ services:
     dns:
       - 8.8.8.8
     networks:
-      - kafka-net
+      - macvlan-kafka-net
 
   spark-driver-ma:
     image: bitnami/spark:latest
@@ -55,15 +55,16 @@ services:
     dns:
       - 8.8.8.8
     networks:
-      - kafka-net
+      - macvlan-kafka-net
 
 networks:
-  kafka-net:
-    name: kafka_stack_kafka-net
+  macvlan-kafka-net:
+    name: macvlan-kafka-net
     external: true
 # 本地------------------------------------------
 # networks:
 #   kafka-net:
+#     name: kafka_stack_kafka-net
 #     external: true
 # -----------------------------------------------------------------------------
 

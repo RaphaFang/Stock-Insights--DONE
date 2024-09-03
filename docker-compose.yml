@@ -12,12 +12,13 @@ services:
     ports:
       - "9092:9092"
       - "9093:9093"
+    network_mode: host # 使用主機網絡模式
     environment:
       KAFKA_CFG_NODE_ID: "1"
       KAFKA_CFG_PROCESS_ROLES: "broker,controller"
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093" # 使用 localhost 或主機內部名稱
       KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092 # 修改為可被其他容器訪問的方式
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
       KAFKA_CFG_LOG_DIRS: /bitnami/kafka/data
       KAFKA_CFG_KRAFT_MODE: "true"
@@ -29,22 +30,18 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - kafka_data:/bitnami/kafka
-    # 要考慮不要設定，不然log太多
-    networks:
-      - kafka-net
 
   kafka-app:
     image: raphafang/kafka-app:latest
-    # 留著本地測試用
-    # build: .
     env_file:
       - .env
     ports:
       - "8001:8001"
+    network_mode: host # 使用主機網絡模式
     dns:
       - 8.8.8.8
     environment:
-      KAFKA_BROKER: kafka:9092
+      KAFKA_BROKER: localhost:9092 # 使用 localhost 作為 Kafka 的 broker
     deploy:
       resources:
         limits:
@@ -53,28 +50,81 @@ services:
       placement:
         constraints:
           - "node.hostname == ip-10-0-1-138"
-    networks:
-      - kafka-net
-      - aws-net
-
-networks:
-  kafka-net:
-    driver: overlay
-    attachable: true
-  aws-net:
-    external: true
-    # name: vpc-0732371fa974ce172 # 這根本用不了
 
 volumes:
   kafka_data:
     driver: local
-# 本地------------------------------------------
+### 本地------------------------------------------
+# services:
+#   kafka:
+#     image: "bitnami/kafka:latest"
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: "2"
+#           memory: 4G
+#       placement:
+#         constraints:
+#           - "node.hostname == ip-10-0-1-138"
+#     ports:
+#       - "9092:9092"
+#       - "9093:9093"
+#     environment:
+#       KAFKA_CFG_NODE_ID: "1"
+#       KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+#       KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
+#       KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+#       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+#       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+#       KAFKA_CFG_LOG_DIRS: /bitnami/kafka/data
+#       KAFKA_CFG_KRAFT_MODE: "true"
+#       KAFKA_CFG_KRAFT_STORAGE_ROOT_DIR: /bitnami/kafka/data
+#       KAFKA_CFG_KRAFT_METADATA_LOG_DIRS: /bitnami/kafka/meta
+#       KAFKA_OPTS: "-Duser.timezone=Asia/Taipei"
+#       ALLOW_PLAINTEXT_LISTENER: "yes"
+#       KAFKA_CFG_LOG_RETENTION_MINUTES: "5"
+#     volumes:
+#       - /var/run/docker.sock:/var/run/docker.sock
+#       - kafka_data:/bitnami/kafka
+#     # 要考慮不要設定，不然log太多
+#     networks:
+#       - kafka-net
+
+#   kafka-app:
+#     image: raphafang/kafka-app:latest
+#     # 留著本地測試用
+#     # build: .
+#     env_file:
+#       - .env
+#     ports:
+#       - "8001:8001"
+#     dns:
+#       - 8.8.8.8
+#     environment:
+#       KAFKA_BROKER: kafka:9092
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: "1.5"
+#           memory: 3G
+#       placement:
+#         constraints:
+#           - "node.hostname == ip-10-0-1-138"
+#     networks:
+#       - kafka-net
+#       - aws-net
 # networks:
 #   kafka-net:
 #     driver: bridge
 
-# 已經取代------------------------------------------
+# volumes:
+#   kafka_data:
+#     driver: local
+### 捨棄------------------------------------------
 # networks:
 #   kafka-net:
 #     driver: overlay
 #     attachable: true
+#   aws-net:
+#     external: true
+#     # name: vpc-0732371fa974ce172 # 這根本用不了

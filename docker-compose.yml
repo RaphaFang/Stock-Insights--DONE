@@ -6,9 +6,9 @@ services:
         limits:
           cpus: "2"
           memory: 4G
-      placement:
-        constraints:
-          - "node.hostname == ip-10-0-1-138"
+      # placement:
+      #   constraints:
+      #     - "node.hostname == ip-10-0-1-138"
     ports:
       - "9092:9092"
       - "9093:9093"
@@ -47,9 +47,9 @@ services:
         limits:
           cpus: "1.5"
           memory: 3G
-      placement:
-        constraints:
-          - "node.hostname == ip-10-0-1-138"
+      # placement:
+      #   constraints:
+      #     - "node.hostname == ip-10-0-1-138"
 
 volumes:
   kafka_data:

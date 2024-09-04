@@ -12,33 +12,33 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 async def build_async_sql_pool():
-    # return await aiomysql.create_pool(
-    #     host="database-v5.cxu0oc6yqrfs.us-east-1.rds.amazonaws.com",
-    #     user=os.getenv('SQL_USER'),
-    #     password=os.getenv('SQL_PASSWORD'),
-    #     # ----------------------------------------------------------------
-    #     # host="localhost",
-    #     # user=os.getenv('SQL_USER_LOCAL'),
-    #     # password=os.getenv('SQL_PASSWORD_LOCAL'),
-    #     # ----------------------------------------------------------------
-    #     port=3306,
-    #     db='stock_db',
-    #     minsize=1,
-    #     maxsize=10,
-    # )
-    try:
-        pool = await aiomysql.create_pool(
-            host='database-v5.cxu0oc6yqrfs.us-east-1.rds.amazonaws.com',
-            # port=3306,
-            user=os.getenv('SQL_USER'),
-            password=os.getenv('SQL_PASSWORD'),
-            db='stock_db',
-        )
-        print("成功連接到 RDS！")
-        pool.close()
-        await pool.wait_closed()
-    except Exception as e:
-        print(f"連接失敗，錯誤訊息: {e}")
+    return await aiomysql.create_pool(
+        host="database-v5.cxu0oc6yqrfs.us-east-1.rds.amazonaws.com",
+        user=os.getenv('SQL_USER'),
+        password=os.getenv('SQL_PASSWORD'),
+        # ----------------------------------------------------------------
+        # host="localhost",
+        # user=os.getenv('SQL_USER_LOCAL'),
+        # password=os.getenv('SQL_PASSWORD_LOCAL'),
+        # ----------------------------------------------------------------
+        port=3306,
+        db='stock_db',
+        minsize=1,
+        maxsize=10,
+    )
+    # try:
+    #     pool = await aiomysql.create_pool(
+    #         host='database-v5.cxu0oc6yqrfs.us-east-1.rds.amazonaws.com',
+    #         # port=3306,
+    #         user=os.getenv('SQL_USER'),
+    #         password=os.getenv('SQL_PASSWORD'),
+    #         db='stock_db',
+    #     )
+    #     print("成功連接到 RDS！")
+    #     pool.close()
+    #     await pool.wait_closed()
+    # except Exception as e:
+    #     print(f"連接失敗，錯誤訊息: {e}")
 
 async def check_today_table_exists(pool, prefix):
     today = datetime.now().strftime('%Y_%m_%d')

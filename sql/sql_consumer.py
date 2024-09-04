@@ -26,19 +26,6 @@ async def build_async_sql_pool():
         minsize=1,
         maxsize=10,
     )
-    # try:
-    #     pool = await aiomysql.create_pool(
-    #         host='database-v5.cxu0oc6yqrfs.us-east-1.rds.amazonaws.com',
-    #         # port=3306,
-    #         user=os.getenv('SQL_USER'),
-    #         password=os.getenv('SQL_PASSWORD'),
-    #         db='stock_db',
-    #     )
-    #     print("成功連接到 RDS！")
-    #     pool.close()
-    #     await pool.wait_closed()
-    # except Exception as e:
-    #     print(f"連接失敗，錯誤訊息: {e}")
 
 async def check_today_table_exists(pool, prefix):
     today = datetime.now().strftime('%Y_%m_%d')
@@ -116,22 +103,21 @@ async def consumer_to_queue(prefix, queue, topic):
             consumer = await create_consumer("kafka_per_sec_data")
         elif prefix=="MA":
             consumer = await create_consumer("kafka_MA_data")
-    #         try:
-    #     async for message in consumer:
-    #         await MA_queue.put(message.value.decode('utf-8'))
-    # finally:
-    #     await consumer.stop()
 
         async for message in consumer:
             logging.info(f"from data_to_sql_consumer\ngot {message}")
-
-
-            raw = message.value().decode("utf-8")  # Parse string into a dictionary
-
-
+            raw = message.value.decode("utf-8")
             logging.info(type(raw))
             logging.info(raw)
 
+
+            # raw = message.value().decode("utf-8")
+            # logging.info(f"Type of raw: {type(raw)}")
+            # logging.info(f"Raw message: {raw}")
+
+            #     # Load JSON from the decoded string
+            # data = json.loads(raw)
+            # logging.info(f"Parsed JSON: {data}")
             # logging.info(f"from data_to_sql_consumer\ngot {topic}")
 
             # if isinstance(raw, dict):

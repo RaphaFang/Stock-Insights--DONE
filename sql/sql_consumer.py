@@ -47,42 +47,42 @@ async def check_today_table_exists(pool, prefix):
         async with conn.cursor() as cursor:
             if prefix == "MA":
                 await cursor.execute(f"""
-                    CREATE TABLE IF NOT EXISTS {table_name} (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        symbol VARCHAR(10),
-                        type VARCHAR(50),
-                        MA_type VARCHAR(50),
-                        start DATETIME,
-                        end DATETIME,
-                        current_time DATETIME,
-                        first_in_window DATETIME,
-                        last_in_window DATETIME,
-                        real_data_count INT,
-                        filled_data_count INT,
-                        sma_5 FLOAT,
-                        sum_of_vwap FLOAT,
-                        count_of_vwap INT,
-                        data_count INT
+                    CREATE TABLE IF NOT EXISTS `{table_name}` (
+                        `id` INT AUTO_INCREMENT PRIMARY KEY,
+                        `symbol` VARCHAR(10),
+                        `type` VARCHAR(50),
+                        `MA_type` VARCHAR(50),
+                        `start` DATETIME,
+                        `end` DATETIME,
+                        `current_time` DATETIME,
+                        `first_in_window` DATETIME,
+                        `last_in_window` DATETIME,
+                        `real_data_count` INT,
+                        `filled_data_count` INT,
+                        `sma_5` FLOAT,
+                        `sum_of_vwap` FLOAT,
+                        `count_of_vwap` INT,
+                        `data_count` INT
                     )
                 """)
             elif prefix == "sec":
                 await cursor.execute(f"""
-                    CREATE TABLE IF NOT EXISTS {table_name} (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        symbol VARCHAR(10),
-                        type VARCHAR(50),
-                        start DATETIME,
-                        end DATETIME,
-                        current_time DATETIME,
-                        last_data_time DATETIME,
-                        real_data_count INT,
-                        filled_data_count INT,
-                        real_or_filled VARCHAR(10),
-                        vwap_price_per_sec FLOAT,
-                        size_per_sec INT,
-                        volume_till_now INT,
-                        yesterday_price FLOAT,
-                        price_change_percentage FLOAT
+                    CREATE TABLE IF NOT EXISTS `{table_name}` (
+                        `id` INT AUTO_INCREMENT PRIMARY KEY,
+                        `symbol` VARCHAR(10),
+                        `type` VARCHAR(50),
+                        `start` DATETIME,
+                        `end` DATETIME,
+                        `current_time` DATETIME,
+                        `last_data_time` DATETIME,
+                        `real_data_count` INT,
+                        `filled_data_count` INT,
+                        `real_or_filled` VARCHAR(10),
+                        `vwap_price_per_sec` FLOAT,
+                        `size_per_sec` INT,
+                        `volume_till_now` INT,
+                        `yesterday_price` FLOAT,
+                        `price_change_percentage` FLOAT
                     )
                 """)
             await conn.commit()
@@ -113,9 +113,9 @@ async def create_consumer(topic):
 async def consumer_to_queue(prefix, queue, topic):
     try:
         if prefix=="sec":
-            consumer = create_consumer("kafka_per_sec_data")
+            consumer = await create_consumer("kafka_per_sec_data")
         elif prefix=="MA":
-            consumer = create_consumer("kafka_MA_data")
+            consumer = await create_consumer("kafka_MA_data")
 
         async for message in consumer:
             raw = json.loads(message.value().decode("utf-8"))

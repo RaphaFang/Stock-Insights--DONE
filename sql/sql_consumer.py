@@ -127,14 +127,18 @@ async def consumer_to_queue(prefix, queue, topic):
             logging.info(type(raw))
             logging.info(raw)
             logging.info(f"from data_to_sql_consumer\ngot {topic}: {raw.get('symbol')}")
-            await queue.put((
-                    raw.get('symbol'), raw.get('type'), raw.get('MA_type'),
-                    raw.get('start'), raw.get('end'), raw.get('current_time'),
-                    raw.get('first_in_window'), raw.get('last_in_window'),
-                    raw.get('real_data_count'), raw.get('filled_data_count'),
-                    raw.get('sma_5'), raw.get('sum_of_vwap'),
-                    raw.get('count_of_vwap'), raw.get('5_data_count')
-                ))
+
+            if isinstance(raw, dict):
+                await queue.put((
+                        raw.get('symbol'), raw.get('type'), raw.get('MA_type'),
+                        raw.get('start'), raw.get('end'), raw.get('current_time'),
+                        raw.get('first_in_window'), raw.get('last_in_window'),
+                        raw.get('real_data_count'), raw.get('filled_data_count'),
+                        raw.get('sma_5'), raw.get('sum_of_vwap'),
+                        raw.get('count_of_vwap'), raw.get('5_data_count')
+                    ))
+            else:
+                logging.error("期望獲取字典類型數據，但實際獲得了其他類型。跳過此消息。")
 
     except KeyboardInterrupt:
         logging.info("Consumer stopped by user.")

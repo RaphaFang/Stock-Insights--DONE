@@ -1,10 +1,6 @@
 services:
   spark-driver-sec:
     image: bitnami/spark:latest
-    # deploy:
-    #   placement:
-    #     constraints:
-    #       - "node.hostname == ip-10-0-1-231"
     volumes:
       - ./sp:/opt/spark-apps
       - ./.ivy2:/opt/bitnami/spark/.ivy2
@@ -19,7 +15,11 @@ services:
       spark-submit
       --master local[2]
       --conf spark.sql.session.timeZone=Asia/Taipei
-      --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2 
+      --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+      --conf spark.driver.bindAddress=10.0.1.231
+      --conf spark.driver.host=10.0.1.231
+      --conf spark.driver.port=4040
+      --conf spark.blockManager.port=4041
       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
       /opt/spark-apps/spark_application_first.py
       "
@@ -33,20 +33,9 @@ services:
       SPARK_DRIVER_HOST: 10.0.1.231
       SPARK_DRIVER_PORT: 4040
       SPARK_BLOCKMANAGER_PORT: 4041
-    # environment:
-    #   KAFKA_BROKER: 10.0.1.138:9092
-    #   SPARK_LOCAL_IP: 10.0.1.231
-    #   SPARK_PUBLIC_DNS: 10.0.1.231
-
-    # networks:
-    #   - kafka-net
 
   spark-driver-ma:
     image: bitnami/spark:latest
-    # deploy:
-    #   placement:
-    #     constraints:
-    #       - "node.hostname == ip-10-0-1-231"
     volumes:
       - ./sp:/opt/spark-apps
       - ./.ivy2:/opt/bitnami/spark/.ivy2
@@ -62,6 +51,10 @@ services:
       --master local[2]
       --conf spark.sql.session.timeZone=Asia/Taipei
       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+      --conf spark.driver.bindAddress=10.0.1.231
+      --conf spark.driver.host=10.0.1.231
+      --conf spark.driver.port=4046
+      --conf spark.blockManager.port=4047
       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
       /opt/spark-apps/spark_ma.py
       "
@@ -73,59 +66,82 @@ services:
       SPARK_PUBLIC_DNS: 10.0.1.231
       SPARK_DRIVER_BIND_ADDRESS: 10.0.1.231
       SPARK_DRIVER_HOST: 10.0.1.231
-      SPARK_DRIVER_PORT: 4040
-      SPARK_BLOCKMANAGER_PORT: 4041
-    # environment:
-    #   KAFKA_BROKER: 10.0.1.138:9092
-    #   SPARK_LOCAL_IP: 10.0.1.231
-    #   SPARK_PUBLIC_DNS: 10.0.1.231
-
-    # networks:
-    #   - kafka-net
-# networks:
-#   kafka-net:
-#     name: kafka_stack_kafka-net
-#     external: true
+      SPARK_DRIVER_PORT: 4046
+      SPARK_BLOCKMANAGER_PORT: 4047
 # 本地------------------------------------------
 # networks:
 #   kafka-net:
 #     name: kafka_stack_kafka-net
 #     external: true
-# -----------------------------------------------------------------------------
+# 可以運作的swarm版本 -----------------------------------------------------------------------------
+# services:
+#   spark-driver-sec:
+#     image: bitnami/spark:latest
+#     deploy:
+#       placement:
+#         constraints:
+#           - "node.hostname == ip-10-0-1-231"
+#     volumes:
+#       - ./sp:/opt/spark-apps
+#       - ./.ivy2:/opt/bitnami/spark/.ivy2
+#       - ./checkpoints:/app/tmp/spark_checkpoints
+#     working_dir: /opt/spark-apps
+#     ports:
+#       - "4040-4045:4040-4045"
+#     command: >
+#       bash -c "
+#       pip install --user kafka-python==2.0.2 six &&
+#       mkdir -p /opt/bitnami/spark/.ivy2/local &&
+#       spark-submit
+#       --master local[2]
+#       --conf spark.sql.session.timeZone=Asia/Taipei
+#       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+#       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
+#       /opt/spark-apps/spark_application_first.py
+#       "
+#     dns:
+#       - 8.8.8.8
+#     environment:
+#       KAFKA_BROKER: kafka:9092
+#     networks:
+#       - kafka-net
 
-# environment:
-#   - SPARK_MODE=client
-#   - SPARK_MASTER_URL=spark://spark-master:7077
+#   spark-driver-ma:
+#     image: bitnami/spark:latest
+#     deploy:
+#       placement:
+#         constraints:
+#           - "node.hostname == ip-10-0-1-231"
+#     volumes:
+#       - ./sp:/opt/spark-apps
+#       - ./.ivy2:/opt/bitnami/spark/.ivy2
+#       - ./checkpoints:/app/tmp/spark_checkpoints
+#     working_dir: /opt/spark-apps
+#     ports:
+#       - "4046-4050:4046-4050"
+#     command: >
+#       bash -c "
+#       pip install --user kafka-python==2.0.2 six &&
+#       mkdir -p /opt/bitnami/spark/.ivy2/local &&
+#       spark-submit
+#       --master local[2]
+#       --conf spark.sql.session.timeZone=Asia/Taipei
+#       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+#       --conf spark.driver.bindAddress=10.0.1.231
+#       --conf spark.driver.host=10.0.1.231
+#       --conf spark.driver.port=4046
+#       --conf spark.blockManager.port=4047
+#       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
+#       /opt/spark-apps/spark_ma.py
+#       "
+#     dns:
+#       - 8.8.8.8
+#     environment:
+#       KAFKA_BROKER: kafka:9092
+#     networks:
+#       - kafka-net
 
-# spark-master:
-#   image: bitnami/spark:latest
-#   container_name: spark-master
-#   environment:
-#     - SPARK_MODE=master
-#     - SPARK_MASTER_HOST=spark-master
-#     - SPARK_RPC_AUTHENTICATION_ENABLED=no
-#     - SPARK_RPC_ENCRYPTION_ENABLED=no
-#     - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-#     - SPARK_SSL_ENABLED=no
-#   # cpus: 0.375
-#   ports:
-#     - "7077:7077"
-#     - "8080:8080"
-#   networks:
-#     - kafka-net
-
-# spark-worker:
-#   image: bitnami/spark:latest
-#   container_name: spark-worker
-#   environment:
-#     - SPARK_MODE=worker
-#     - SPARK_MASTER_URL=spark://spark-master:7077
-#     # - SPARK_WORKER_CORES=1 # 這邊是對內宣稱，worker可以用滿分配的0.75
-#     # - SPARK_WORKER_MEMORY=1G
-#   # cpus: 0.75
-#   depends_on:
-#     - spark-master
-#   ports:
-#     - "8081:8081"
-#   networks:
-#     - kafka-net
+# networks:
+#   kafka-net:
+#     name: kafka_stack_kafka-net
+#     external: true

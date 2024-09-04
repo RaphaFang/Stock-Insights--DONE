@@ -8,6 +8,7 @@ services:
     working_dir: /opt/spark-apps
     ports:
       - "4040-4045:4040-4045"
+    network_mode: host
     command: >
       bash -c "
       pip install --user kafka-python==2.0.2 six &&
@@ -41,6 +42,7 @@ services:
     working_dir: /opt/spark-apps
     ports:
       - "4046-4050:4046-4050"
+    network_mode: host
     command: >
       bash -c "
       pip install --user kafka-python==2.0.2 six &&
@@ -56,10 +58,6 @@ services:
       "
     dns:
       - 8.8.8.8
-      # --conf spark.driver.bindAddress=0.0.0.0
-      # --conf spark.driver.host=0.0.0.0
-      # --conf spark.driver.port=4046
-      # --conf spark.blockManager.port=4047
     environment:
       KAFKA_BROKER: 10.0.1.138:9092
       SPARK_LOCAL_IP: 10.0.1.231

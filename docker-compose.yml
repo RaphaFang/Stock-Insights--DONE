@@ -42,6 +42,8 @@ services:
       - 8.8.8.8
     environment:
       KAFKA_BROKER: 10.0.1.138:9092
+      SPARK_LOCAL_IP: 10.0.1.138
+      SPARK_PUBLIC_DNS: 10.0.1.138
     deploy:
       resources:
         limits:

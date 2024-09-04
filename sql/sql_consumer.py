@@ -116,9 +116,16 @@ async def consumer_to_queue(prefix, queue, topic):
             consumer = await create_consumer("kafka_per_sec_data")
         elif prefix=="MA":
             consumer = await create_consumer("kafka_MA_data")
+    #         try:
+    #     async for message in consumer:
+    #         await MA_queue.put(message.value.decode('utf-8'))
+    # finally:
+    #     await consumer.stop()
 
         async for message in consumer:
             raw = message.value().decode("utf-8")
+            logging.info(type(raw))
+            logging.info(raw)
             logging.info(f"from data_to_sql_consumer\ngot {topic}: {raw.get('symbol')}")
             await queue.put((
                     raw.get('symbol'), raw.get('type'), raw.get('MA_type'),

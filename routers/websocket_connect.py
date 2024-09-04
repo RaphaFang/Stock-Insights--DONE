@@ -15,7 +15,7 @@ async def per_sec_consumer_loop(topic_name):
     # 用一般的KafkaConsumer會導致組塞
     consumer = AIOKafkaConsumer(
         topic_name,
-        bootstrap_servers='kafka:9092',
+        bootstrap_servers='10.0.1.138:9092',
         group_id='ws_per_sec_group',
         auto_offset_reset='earliest',
         # loop=asyncio.get_event_loop()  # 新版本不用這個了
@@ -31,7 +31,7 @@ async def per_sec_consumer_loop(topic_name):
 async def MA_consumer_loop(topic_name):
     consumer = AIOKafkaConsumer(
         topic_name,
-        bootstrap_servers='kafka:9092',
+        bootstrap_servers='10.0.1.138:9092',
         group_id='ws_MA_group',
         auto_offset_reset='earliest',
     )

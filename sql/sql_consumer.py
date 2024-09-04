@@ -123,10 +123,16 @@ async def consumer_to_queue(prefix, queue, topic):
     #     await consumer.stop()
 
         async for message in consumer:
-            raw = json.loads(message.value().decode("utf-8"))  # Parse string into a dictionary
+            logging.info(f"from data_to_sql_consumer\ngot {message}")
+
+
+            raw = message.value().decode("utf-8")  # Parse string into a dictionary
+
+
             logging.info(type(raw))
             logging.info(raw)
-            logging.info(f"from data_to_sql_consumer\ngot {topic}")
+
+            # logging.info(f"from data_to_sql_consumer\ngot {topic}")
 
             # if isinstance(raw, dict):
             #     await queue.put((

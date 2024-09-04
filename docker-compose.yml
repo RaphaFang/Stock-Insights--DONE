@@ -1,10 +1,10 @@
 services:
   spark-driver-sec:
     image: bitnami/spark:latest
-    deploy:
-      placement:
-        constraints:
-          - "node.hostname == ip-10-0-1-231"
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - "node.hostname == ip-10-0-1-231"
     volumes:
       - ./sp:/opt/spark-apps
       - ./.ivy2:/opt/bitnami/spark/.ivy2
@@ -25,15 +25,19 @@ services:
       "
     dns:
       - 8.8.8.8
-    networks:
-      - kafka-net
+    environment:
+      KAFKA_BROKER: 10.0.1.138:9092
+      SPARK_LOCAL_IP: 10.0.1.231
+      SPARK_PUBLIC_DNS: 10.0.1.231
+    # networks:
+    #   - kafka-net
 
   spark-driver-ma:
     image: bitnami/spark:latest
-    deploy:
-      placement:
-        constraints:
-          - "node.hostname == ip-10-0-1-231"
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - "node.hostname == ip-10-0-1-231"
     volumes:
       - ./sp:/opt/spark-apps
       - ./.ivy2:/opt/bitnami/spark/.ivy2
@@ -54,13 +58,17 @@ services:
       "
     dns:
       - 8.8.8.8
-    networks:
-      - kafka-net
+    environment:
+      KAFKA_BROKER: 10.0.1.138:9092
+      SPARK_LOCAL_IP: 10.0.1.231
+      SPARK_PUBLIC_DNS: 10.0.1.231
 
-networks:
-  kafka-net:
-    name: kafka_stack_kafka-net
-    external: true
+    # networks:
+    #   - kafka-net
+# networks:
+#   kafka-net:
+#     name: kafka_stack_kafka-net
+#     external: true
 # 本地------------------------------------------
 # networks:
 #   kafka-net:

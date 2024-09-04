@@ -52,7 +52,7 @@ def main():
     
     kafka_df = spark.readStream \
         .format("kafka") \
-        .option("kafka.bootstrap.servers", "kafka:9092") \
+        .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
         .option("subscribe", "kafka_per_sec_data") \
         .option("startingOffsets", "latest") \
         .option("maxOffsetsPerTrigger", "2000") \
@@ -122,7 +122,7 @@ def main():
             "to_json(struct(*)) AS value"
         ).write \
             .format("kafka") \
-            .option("kafka.bootstrap.servers", "kafka:9092") \
+            .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
             .option("topic", "kafka_MA_data") \
             .save()
         

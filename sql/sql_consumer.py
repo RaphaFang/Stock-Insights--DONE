@@ -118,7 +118,7 @@ async def consumer_to_queue(prefix, queue, topic):
             consumer = await create_consumer("kafka_MA_data")
 
         async for message in consumer:
-            raw = json.loads(message.value().decode("utf-8"))
+            raw = message.value().decode("utf-8")
             logging.info(f"from data_to_sql_consumer\ngot {topic}: {raw.get('symbol')}")
             await queue.put((
                     raw.get('symbol'), raw.get('type'), raw.get('MA_type'),
@@ -132,7 +132,7 @@ async def consumer_to_queue(prefix, queue, topic):
     except KeyboardInterrupt:
         logging.info("Consumer stopped by user.")
     except Exception as e:
-        logging.info(f"Error occurred: {e}, retrying...")
+        logging.info(f"Error occurred consumer_to_queue: {e}, retrying...")
         await asyncio.sleep(5)
     finally:
         await consumer.stop()

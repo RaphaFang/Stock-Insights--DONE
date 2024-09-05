@@ -73,20 +73,17 @@ def main():
             SF.count(SF.when(col("real_or_filled") == "real", col("symbol"))).alias("real_data_count"),
             SF.count(SF.when(col("real_or_filled") != "real", col("symbol"))).alias("filled_data_count"),
         )
-    
-        window_spec = Window.partitionBy("symbol").orderBy("window.start")
-        sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
-
-        current_broadcast_value = broadcast.value
-
-
-
         sma_df = sma_df.withColumn(
             column_name,
             SF.when(col('count_of_vwap') != 0,
                 SF.round(col('sum_of_vwap') / col('count_of_vwap'), 2)
             ).otherwise(0)
         )
+    
+        window_spec = Window.partitionBy("symbol").orderBy("window.start")
+        sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
+
+        current_broadcast_value = broadcast.value
         sma_df = sma_df.withColumn(
             "prev_sma", SF.lag(column_name, 2).over(window_spec)
         )

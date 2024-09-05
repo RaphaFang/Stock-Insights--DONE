@@ -67,6 +67,11 @@ def main():
                 SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
                 SF.last("yesterday_price", ignorenulls=True).alias("yesterday_price"),
             )
+            windowed_df = windowed_df.withColumn(
+                "vwap_price_per_sec",
+                SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
+                .otherwise(0)
+            )
             # 這會是更有效率的作法，比起在尾部加上orderby 
             window_spec = Window.partitionBy("symbol").orderBy("window.start")
             windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
@@ -77,11 +82,6 @@ def main():
             # ! 這邊的廣播設定有大問題，他會只存下非0的資料，這應該不對
             current_broadcast_value = broadcast_vwap.value
 
-            result_df = windowed_df.withColumn(
-                "vwap_price_per_sec",
-                SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
-                .otherwise(0)
-            )
             result_df = windowed_df.withColumn(
                 "prev_vwap", SF.lag("vwap_price_per_sec", 2).over(window_spec)
             )

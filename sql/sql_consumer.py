@@ -130,23 +130,24 @@ async def batch_insert(prefix, pool, table_name, batch_data):
         async with conn.cursor() as cursor:
             if prefix == "MA":
                 insert_query = f"""
-                INSERT INTO {table_name} (
-                    symbol, type, MA_type, start, end, current_time, 
-                    first_in_window, last_in_window, real_data_count, 
-                    filled_data_count, sma_5, sum_of_vwap, count_of_vwap, data_count
+                INSERT INTO `{table_name}` (
+                    `symbol`, `type`, `MA_type`, `start`, `end`, `current_time`, 
+                    `first_in_window`, `last_in_window`, `real_data_count`, 
+                    `filled_data_count`, `sma_5`, `sum_of_vwap`, `count_of_vwap`, `data_count`
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
             elif prefix == "sec":
                 insert_query = f"""
-                INSERT INTO {table_name} (
-                    symbol, type, start, end, current_time, last_data_time,
-                    real_data_count, filled_data_count, real_or_filled,
-                    vwap_price_per_sec, size_per_sec, volume_till_now,
-                    yesterday_price, price_change_percentage
+                INSERT INTO `{table_name}` (
+                    `symbol`, `type`, `start`, `end`, `current_time`, `last_data_time`,
+                    `real_data_count`, `filled_data_count`, `real_or_filled`,
+                    `vwap_price_per_sec`, `size_per_sec`, `volume_till_now`,
+                    `yesterday_price`, `price_change_percentage`
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
             await cursor.executemany(insert_query, batch_data)
             await conn.commit()
+
 
 async def queue_to_mysql(prefix, queue, pool):
     table_name = await check_today_table_exists(pool, prefix)
@@ -164,4 +165,4 @@ async def queue_to_mysql(prefix, queue, pool):
             await asyncio.sleep(1)  
 
     except Exception as e:
-        logging.error(f"Error in MySQL writer: {e}")
+        logging.error(f"Error in queue_to_mysql: {e}")

@@ -1,9 +1,44 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.window import Window
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, BooleanType, TimestampType
-from pyspark.sql.functions import from_json, col, window, sum as spark_sum, count as spark_count,avg, last, lit, to_timestamp, current_timestamp
-from pyspark.sql.functions import current_timestamp, window, when, lit, coalesce
+from pyspark.sql.functions import from_json, col, to_timestamp, sum as spark_sum, count as spark_count, when, last, lit, current_timestamp
+from pyspark.sql.streaming import GroupState, GroupStateTimeout
 from pyspark.sql import functions as SF
+
+class VWAPState:
+    def __init__(self, last_vwap=50):
+        self.last_vwap = last_vwap
+
+
+def update_vwap_state(key, values, state: GroupState[VWAPState]):
+    if state.exists:
+        current_state = state.get()
+    else:
+        current_state = VWAPState()
+
+    output_rows = []
+    for row in values:
+        size_per_sec = row['size_per_sec']
+        price_time_size = row['price_time_size']
+        if size_per_sec != 0:
+            vwap = price_time_size / size_per_sec
+        else:
+            vwap = 0
+
+        if vwap == 0:
+            vwap = current_state.last_vwap
+        else:
+            current_state.last_vwap = vwap
+
+        output_row = row.asDict()
+        output_row['vwap_price_per_sec'] = vwap
+        output_row['price_change_percentage'] = round(((vwap - row['yesterday_price']) / row['yesterday_price']) * 100, 2) if row['yesterday_price'] != 0 else 0
+        output_row['real_or_filled'] = 'real' if row['real_data_count'] > 0 else 'filled'
+
+        output_rows.append(output_row)
+
+    state.update(current_state)
+    return output_rows
 
 def main():
     schema = StructType([
@@ -33,12 +68,9 @@ def main():
         .config("spark.sql.streaming.offset.management.enabled", "true") \
         .config("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.HDFSBackedStateStoreProvider") \
         .getOrCreate()
-        # 確保有開啟 State Rebalancing 和 Enhanced Offset Management
-        # 使用 pipelining
-        # .config("spark.executor.cores", "2") \
 
-    b_vwap = 50
-    broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
+    # b_vwap = 50
+    # broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
 
     kafka_df = spark.readStream \
         .format("kafka") \
@@ -48,59 +80,198 @@ def main():
         .option("maxOffsetsPerTrigger", "2000") \
         .option("failOnDataLoss", "false") \
         .load()
-    
-    def process_batch(df, epoch_id, broadcast_vwap):
-        try:
-            df = df.selectExpr("CAST(value AS STRING) as json_data") \
+
+    kafka_df = kafka_df.selectExpr("CAST(value AS STRING) as json_data") \
                 .select(from_json(col("json_data"), schema).alias("data")) \
-                .select("data.*")
+                .select("data.*") \
+                .withColumn("time", to_timestamp(col("time") / 1000000))
 
-            df = df.withColumn("time", to_timestamp(col("time") / 1000000))
-            windowed_df = df.groupBy(
-                SF.window(col("time"), "1 second", "1 second"),col("symbol")
-            ).agg(
-                SF.sum(SF.when(col("type") != "heartbeat", col("price") * col("size")).otherwise(0)).alias("price_time_size"),
-                SF.sum(SF.when(col("type") != "heartbeat", col("size")).otherwise(0)).alias("size_per_sec"),
-                SF.last(SF.when(col("type") != "heartbeat", col("volume")).otherwise(0)).alias("volume_till_now"),
-                SF.last("time", ignorenulls=True).alias("last_data_time"),
-                SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
-                SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
-                SF.last("yesterday_price", ignorenulls=True).alias("yesterday_price"),
-            )
-            windowed_df = windowed_df.withColumn(
-                "vwap_price_per_sec",
-                SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
-                .otherwise(0)
-            )
-            # 這會是更有效率的作法，比起在尾部加上orderby 
-            window_spec = Window.partitionBy("symbol").orderBy("window.start")
-            windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
+    windowed_df = kafka_df.groupBy(
+        SF.window(col("time"), "1 second", "1 second"), col("symbol")
+    ).agg(
+        SF.sum(SF.when(col("type") != "heartbeat", col("price") * col("size")).otherwise(0)).alias("price_time_size"),
+        SF.sum(SF.when(col("type") != "heartbeat", col("size")).otherwise(0)).alias("size_per_sec"),
+        SF.last(SF.when(col("type") != "heartbeat", col("volume")).otherwise(0)).alias("volume_till_now"),
+        SF.last("time", ignorenulls=True).alias("last_data_time"),
+        SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
+        SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
+        SF.last("yesterday_price", ignorenulls=True).alias("yesterday_price"),
+    )
 
-            # 現在廣播是設定好了的
-            # 現在想想，用這個廣好像沒什麼用意啊...因為他是在節點上運作...不會同步到另一個節點，也就是說B核心的spark沒辦法知道A核心中修改的值
-            # 除非之後設定成昨天的收盤價格
-            # ! 這邊的廣播設定有大問題，他會只存下非0的資料，這應該不對
-            current_broadcast_value = broadcast_vwap.value
+    result_df = windowed_df.groupBy("symbol").flatMapGroupsWithState(
+        outputMode="update",
+        stateTimeout=GroupStateTimeout.NoTimeout(),
+        func=update_vwap_state
+    )
+    result_df = result_df.selectExpr(
+        "CAST(symbol AS STRING) AS key",
+        "to_json(struct(*)) AS value"
+    )
+    query = result_df.writeStream \
+        .format("kafka") \
+        .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
+        .option("topic", "kafka_per_sec_data") \
+        .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
+        .start()
+    query.awaitTermination()
 
-            result_df = windowed_df.withColumn(
-                "prev_vwap", SF.lag("vwap_price_per_sec", 2).over(window_spec)
-            )
-            result_df = result_df.withColumn(
-                "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(current_broadcast_value))
-            )
+if __name__ == "__main__":
+    main()
 
-            result_df = result_df.withColumn(
-                "vwap_price_per_sec",
-                SF.when(col("vwap_price_per_sec") == 0, SF.coalesce(col("prev_vwap"))) # , SF.lit(current_broadcast_value)
-                .otherwise(col("vwap_price_per_sec"))
-            )
 
-            result_df = result_df.withColumn(
-                "price_change_percentage",
-                SF.when(col("yesterday_price") != 0, 
-                    SF.round(((col("vwap_price_per_sec") - col("yesterday_price")) / col("yesterday_price")) * 100, 2)
-                ).otherwise(0)
-            )
+
+# ---------------------------------------------------------------------------------------------------
+# from pyspark.sql import SparkSession
+# from pyspark.sql.window import Window
+# from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, BooleanType, TimestampType
+# from pyspark.sql.functions import from_json, col, window, sum as spark_sum, count as spark_count,avg, last, lit, to_timestamp, current_timestamp
+# from pyspark.sql.functions import current_timestamp, window, when, lit, coalesce
+# from pyspark.sql import functions as SF
+
+# def main():
+#     schema = StructType([
+#         StructField("symbol", StringType(), True),
+#         StructField("type", StringType(), True),
+#         StructField("exchange", StringType(), True),
+#         StructField("market", StringType(), True),
+#         StructField("price", DoubleType(), True),
+#         StructField("size", IntegerType(), True),
+#         StructField("bid", DoubleType(), True),
+#         StructField("ask", DoubleType(), True),
+#         StructField("volume", IntegerType(), True),
+#         StructField("isContinuous", BooleanType(), True),
+#         StructField("time", StringType(), True), 
+#         StructField("serial", StringType(), True),
+#         StructField("id", StringType(), True),
+#         StructField("channel", StringType(), True),
+#         StructField("yesterday_price", DoubleType(), True),
+#     ])
+
+#     spark = SparkSession.builder \
+#         .appName("spark_per_sec_data") \
+#         .master("local[2]") \
+#         .config("spark.sql.streaming.pipelining.enabled", "true") \
+#         .config("spark.sql.streaming.pipelining.batchSize", "500") \
+#         .config("spark.sql.streaming.stateRebalancing.enabled", "true") \
+#         .config("spark.sql.streaming.offset.management.enabled", "true") \
+#         .config("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.HDFSBackedStateStoreProvider") \
+#         .getOrCreate()
+#         # 確保有開啟 State Rebalancing 和 Enhanced Offset Management
+#         # 使用 pipelining
+#         # .config("spark.executor.cores", "2") \
+
+#     b_vwap = 50
+#     broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
+
+#     kafka_df = spark.readStream \
+#         .format("kafka") \
+#         .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
+#         .option("subscribe", "kafka_raw_data") \
+#         .option("startingOffsets", "latest") \
+#         .option("maxOffsetsPerTrigger", "2000") \
+#         .option("failOnDataLoss", "false") \
+#         .load()
+    
+#     def process_batch(df, epoch_id, broadcast_vwap):
+#         try:
+#             df = df.selectExpr("CAST(value AS STRING) as json_data") \
+#                 .select(from_json(col("json_data"), schema).alias("data")) \
+#                 .select("data.*")
+
+#             df = df.withColumn("time", to_timestamp(col("time") / 1000000))
+#             windowed_df = df.groupBy(
+#                 SF.window(col("time"), "1 second", "1 second"),col("symbol")
+#             ).agg(
+#                 SF.sum(SF.when(col("type") != "heartbeat", col("price") * col("size")).otherwise(0)).alias("price_time_size"),
+#                 SF.sum(SF.when(col("type") != "heartbeat", col("size")).otherwise(0)).alias("size_per_sec"),
+#                 SF.last(SF.when(col("type") != "heartbeat", col("volume")).otherwise(0)).alias("volume_till_now"),
+#                 SF.last("time", ignorenulls=True).alias("last_data_time"),
+#                 SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
+#                 SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
+#                 SF.last("yesterday_price", ignorenulls=True).alias("yesterday_price"),
+#             )
+#             windowed_df = windowed_df.withColumn(
+#                 "vwap_price_per_sec",
+#                 SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
+#                 .otherwise(0)
+#             )
+#             # 這會是更有效率的作法，比起在尾部加上orderby 
+#             window_spec = Window.partitionBy("symbol").orderBy("window.start")
+#             windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
+
+#             # 現在廣播是設定好了的
+#             # 現在想想，用這個廣好像沒什麼用意啊...因為他是在節點上運作...不會同步到另一個節點，也就是說B核心的spark沒辦法知道A核心中修改的值
+#             # 除非之後設定成昨天的收盤價格
+#             # ! 這邊的廣播設定有大問題，他會只存下非0的資料，這應該不對
+#             current_broadcast_value = broadcast_vwap.value
+
+#             result_df = windowed_df.withColumn(
+#                 "prev_vwap", SF.lag("vwap_price_per_sec", 2).over(window_spec)
+#             )
+#             result_df = result_df.withColumn(
+#                 "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(current_broadcast_value))
+#             )
+
+#             result_df = result_df.withColumn(
+#                 "vwap_price_per_sec",
+#                 SF.when(col("vwap_price_per_sec") == 0, SF.coalesce(col("prev_vwap"))) # , SF.lit(current_broadcast_value)
+#                 .otherwise(col("vwap_price_per_sec"))
+#             )
+
+#             result_df = result_df.withColumn(
+#                 "price_change_percentage",
+#                 SF.when(col("yesterday_price") != 0, 
+#                     SF.round(((col("vwap_price_per_sec") - col("yesterday_price")) / col("yesterday_price")) * 100, 2)
+#                 ).otherwise(0)
+#             )
+
+
+#             result_df = result_df.withColumn(
+#                 "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
+#             ).select(
+#                 "symbol",
+#                 SF.lit("per_sec_data").alias("type"),
+#                 "window.start",
+#                 "window.end",
+
+#                 SF.current_timestamp().alias("current_time"),
+#                 "last_data_time",
+#                 "real_data_count",
+#                 "filled_data_count",
+
+#                 "real_or_filled",
+#                 "vwap_price_per_sec",
+#                 "size_per_sec",
+#                 "volume_till_now",
+
+#                 "yesterday_price",
+#                 "price_change_percentage",
+#             )
+
+#             result_df.selectExpr(
+#                 "CAST(symbol AS STRING) AS key",
+#                 "to_json(struct(*)) AS value"
+#             ).write \
+#                 .format("kafka") \
+#                 .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
+#                 .option("topic", "kafka_per_sec_data") \
+#                 .save()
+            
+#         except Exception as e:
+#             print(f"Error processing batch {epoch_id}: {e}")
+ 
+            
+#     query = kafka_df.writeStream \
+#         .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id, broadcast_vwap)) \
+#         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
+#         .start()
+#         # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了
+#     query.awaitTermination()
+
+# if __name__ == "__main__":
+#     main()
+
+# ---------------------------------------------------------------------------------------------------
             # 下方式重新負值的機制
             # last_non_zero_sma = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
             # if last_non_zero_sma:
@@ -126,54 +297,8 @@ def main():
             # if last_non_zero_sma:
             #     broadcast_vwap.unpersist()
             #     broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_sma["vwap_price_per_sec"])
-
-            result_df = result_df.withColumn(
-                "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
-            ).select(
-                "symbol",
-                SF.lit("per_sec_data").alias("type"),
-                "window.start",
-                "window.end",
-
-                SF.current_timestamp().alias("current_time"),
-                "last_data_time",
-                "real_data_count",
-                "filled_data_count",
-
-                "real_or_filled",
-                "vwap_price_per_sec",
-                "size_per_sec",
-                "volume_till_now",
-
-                "yesterday_price",
-                "price_change_percentage",
-            )
-
-            result_df.selectExpr(
-                "CAST(symbol AS STRING) AS key",
-                "to_json(struct(*)) AS value"
-            ).write \
-                .format("kafka") \
-                .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
-                .option("topic", "kafka_per_sec_data") \
-                .save()
-            
-        except Exception as e:
-            print(f"Error processing batch {epoch_id}: {e}")
- 
-            
-    query = kafka_df.writeStream \
-        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id, broadcast_vwap)) \
-        .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
-        .start()
-        # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了
-    query.awaitTermination()
-
-if __name__ == "__main__":
-    main()
-
-
 # ---------------------------------------------------------------------------------------------------
+
 # 下面這方式是試圖在spark創造heartbeat，發現這方式完全不可行，浪費了一天
 # schema = StructType([
 #     StructField("symbol", StringType(), True),

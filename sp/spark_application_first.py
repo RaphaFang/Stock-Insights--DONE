@@ -82,7 +82,7 @@ def main():
                 .otherwise(0)
             )
             result_df = windowed_df.withColumn(
-                "prev_vwap", SF.lag("initial_vwap", 1).over(window_spec)
+                "prev_vwap", SF.lag("vwap_price_per_sec", 1).over(window_spec)
             )
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",

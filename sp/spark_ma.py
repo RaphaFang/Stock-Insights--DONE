@@ -85,7 +85,7 @@ def main():
             ).otherwise(0)
         )
         sma_df = sma_df.withColumn(
-            "prev_sma", SF.lag("initial_sma", 1).over(window_spec)
+            "prev_sma", SF.lag(column_name, 1).over(window_spec)
         )
         sma_df = sma_df.withColumn(
             column_name, 
@@ -132,12 +132,12 @@ def main():
             # current_broadcast_value = broadcast_ma.value
 
             sma_5 = calculate_sma(df, 5, "sma_5", broadcast_5ma)
-            # sma_15 = calculate_sma(df, 15, "sma_15", broadcast_15ma)
-            # sma_30 = calculate_sma(df, 30, "sma_30", broadcast_30ma)
+            sma_15 = calculate_sma(df, 15, "sma_15", broadcast_15ma)
+            sma_30 = calculate_sma(df, 30, "sma_30", broadcast_30ma)
 
             send_to_kafka(sma_5)
-            # send_to_kafka(sma_15)
-            # send_to_kafka(sma_30)
+            send_to_kafka(sma_15)
+            send_to_kafka(sma_30)
             
         except Exception as e:
             print(f"Error processing batch {epoch_id}: {e}")

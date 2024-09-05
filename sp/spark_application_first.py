@@ -86,20 +86,12 @@ def main():
                 "prev_vwap", SF.lag("vwap_price_per_sec", 2).over(window_spec)
             )
             result_df = result_df.withColumn(
-                "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(0))
+                "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(current_broadcast_value))
             )
-
-            # windowed_df = windowed_df.withColumn(
-            #     "initial_vwap",
-            #     SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
-            #     .otherwise(0)
-            # )
-
-
 
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
-                SF.when(col("vwap_price_per_sec") == 0, SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value)))
+                SF.when(col("vwap_price_per_sec") == 0, SF.coalesce(col("prev_vwap"))) # , SF.lit(current_broadcast_value)
                 .otherwise(col("vwap_price_per_sec"))
             )
 
@@ -107,7 +99,7 @@ def main():
                 "price_change_percentage",
                 SF.when(col("yesterday_price") != 0, 
                     SF.round(((col("vwap_price_per_sec") - col("yesterday_price")) / col("yesterday_price")) * 100, 2)
-                ).otherwise(0) 
+                ).otherwise(0)
             )
             # 下方式重新負值的機制
             # last_non_zero_sma = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
@@ -156,7 +148,6 @@ def main():
                 "yesterday_price",
                 "price_change_percentage",
             )
-            # result_df.foreachPartition(send_partition_to_kafka)
 
             result_df.selectExpr(
                 "CAST(symbol AS STRING) AS key",

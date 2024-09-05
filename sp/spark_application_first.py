@@ -5,23 +5,6 @@ from pyspark.sql.functions import from_json, col, window, sum as spark_sum, coun
 from pyspark.sql.functions import current_timestamp, window, when, lit, coalesce
 from pyspark.sql import functions as SF
 
-# 不能把producer放在全域，好像是spark才會有的問題
-# producer = KafkaProducer(
-#     bootstrap_servers='kafka:9092', 
-#     value_serializer=lambda v: json.dumps(v).encode('utf-8')
-# )
-
-# stock_to_partition = {"2330": 0,"0050": 1,"00670L": 2,"2454": 3,"6115": 4}
-
-# def send_partition_to_kafka(partition):
-#     for row in partition:
-#         partition_id = stock_to_partition.get(row['symbol'], 0)
-#         producer.send('kafka_per_sec_data', 
-#                       key=row['symbol'].encode('utf-8'), 
-#                       value=row, 
-#                       partition=partition_id)
-#     producer.flush()
-
 def main():
     schema = StructType([
         StructField("symbol", StringType(), True),

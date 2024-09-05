@@ -19,7 +19,7 @@ services:
       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
       --conf spark.ui.enabled=false
       --conf spark.driver.bindAddress=10.0.1.231
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
       /opt/spark-apps/spark_application_first.py
       "
     dns:
@@ -54,7 +54,7 @@ services:
       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
       --conf spark.ui.enabled=false
       --conf spark.driver.bindAddress=10.0.1.231
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
       /opt/spark-apps/spark_ma.py
       "
     dns:

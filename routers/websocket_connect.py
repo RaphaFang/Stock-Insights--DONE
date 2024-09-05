@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 import asyncio
 # from kafka import KafkaConsumer
 from aiokafka import AIOKafkaConsumer
+import json
 
 router = APIRouter()
 per_sec_queue = asyncio.Queue()
@@ -38,7 +39,7 @@ async def MA_consumer_loop(topic_name):
     await consumer.start()
     try:
         async for message in consumer:
-            await MA_queue.put(message.value.decode('utf-8'))
+            await MA_queue.put(message.value.decode("utf-8"))
     finally:
         await consumer.stop()
 

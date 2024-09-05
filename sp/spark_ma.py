@@ -78,22 +78,25 @@ def main():
         sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
         current_broadcast_value = broadcast.value
+
+
+
         sma_df = sma_df.withColumn(
-            "initial_sma",
+            column_name,
             SF.when(col('count_of_vwap') != 0,
                 SF.round(col('sum_of_vwap') / col('count_of_vwap'), 2)
             ).otherwise(0)
         )
         sma_df = sma_df.withColumn(
-            "prev_sma", SF.lag(column_name, 1).over(window_spec)
+            "prev_sma", SF.lag(column_name, 2).over(window_spec)
         )
         result_df = result_df.withColumn(
-            "prev_sma", SF.when(SF.col("prev_sma").isNull(), SF.lit(0)).otherwise(SF.col("prev_vwap"))
+            "prev_sma", SF.when(SF.col("prev_sma").isNull(), SF.lit(0))
         )
         sma_df = sma_df.withColumn(
             column_name, 
-            SF.when(col("initial_sma") == 0, SF.coalesce(col("prev_sma"), SF.lit(current_broadcast_value)))
-            .otherwise(col("initial_sma"))
+            SF.when(col(column_name) == 0, SF.coalesce(col("prev_sma"), SF.lit(current_broadcast_value)))
+            .otherwise(col(column_name))
         )
 
         sma_df = sma_df.select(            

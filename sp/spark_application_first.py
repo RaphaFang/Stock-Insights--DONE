@@ -76,23 +76,31 @@ def main():
             # 除非之後設定成昨天的收盤價格
             # ! 這邊的廣播設定有大問題，他會只存下非0的資料，這應該不對
             current_broadcast_value = broadcast_vwap.value
-            windowed_df = windowed_df.withColumn(
-                "initial_vwap",
+
+            result_df = windowed_df.withColumn(
+                "vwap_price_per_sec",
                 SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
                 .otherwise(0)
             )
             result_df = windowed_df.withColumn(
-                "prev_vwap", SF.lag("vwap_price_per_sec", 1).over(window_spec)
+                "prev_vwap", SF.lag("vwap_price_per_sec", 2).over(window_spec)
             )
-            # 將 prev_vwap 設定為 0 當它為 null
             result_df = result_df.withColumn(
-                "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(0)).otherwise(SF.col("prev_vwap"))
+                "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(0))
             )
+
+            # windowed_df = windowed_df.withColumn(
+            #     "initial_vwap",
+            #     SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
+            #     .otherwise(0)
+            # )
+
+
 
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
-                SF.when(col("initial_vwap") == 0, SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value)))
-                .otherwise(col("initial_vwap"))
+                SF.when(col("vwap_price_per_sec") == 0, SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value)))
+                .otherwise(col("vwap_price_per_sec"))
             )
 
             result_df = result_df.withColumn(

@@ -2,44 +2,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // 初始化股票數據物件
   const stocks = {};
 
-  // WebSocket模擬資料
-  const incomingData = [
-    {
-      symbol: "6115",
-      type: "per_sec_data",
-      start: "2024-09-04T19:55:49.000+08:00",
-      end: "2024-09-04T19:55:50.000+08:00",
-      current_time: "2024-09-04T19:55:50.978+08:00",
-      last_data_time: "2024-09-04T19:55:49.238+08:00",
-      real_data_count: 0,
-      filled_data_count: 1,
-      real_or_filled: "filled",
-      vwap_price_per_sec: 200.0,
-      size_per_sec: 100,
-      yesterday_price: 200.0,
-      price_change_percentage: 0.0,
-    },
-    {
-      symbol: "2330",
-      type: "MA_data",
-      MA_type: "5_MA_data",
-      start: "2024-09-04T19:55:42.000+08:00",
-      end: "2024-09-04T19:55:47.000+08:00",
-      current_time: "2024-09-04T19:55:49.325+08:00",
-      first_in_window: "2024-09-04T19:55:42.000+08:00",
-      last_in_window: "2024-09-04T19:55:42.000+08:00",
-      real_data_count: 0,
-      filled_data_count: 1,
-      sma_5: 205.0,
-      sum_of_vwap: 0.0,
-      count_of_vwap: 0,
-      "5_data_count": 1,
-    },
-  ];
+  // 創建 WebSocket 連接
+  const socket = new WebSocket("wss://raphaelfang.com/stock/v1/ws/data");
 
-  // 處理收到的數據
-  incomingData.forEach((data) => {
+  // 當 WebSocket 接收到數據時觸發
+  socket.onmessage = function (event) {
+    const data = JSON.parse(event.data);
     const symbol = data.symbol;
+
     if (!stocks[symbol]) {
       stocks[symbol] = {
         perSecData: [],
@@ -61,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 更新圖表
     updateCharts(symbol);
-  });
+  };
 
   // 創建圖表的容器及圖表
   function createCharts(symbol) {
@@ -69,8 +39,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const stockContainer = document.createElement("div");
     stockContainer.id = `stock-${symbol}`;
     stockContainer.innerHTML = `<h2>股票代碼: ${symbol}</h2>
-          <canvas id="price-chart-${symbol}"></canvas>
-          <canvas id="volume-chart-${symbol}"></canvas>`;
+            <canvas id="price-chart-${symbol}"></canvas>
+            <canvas id="volume-chart-${symbol}"></canvas>`;
     chartsContainer.appendChild(stockContainer);
 
     // 初始化圖表

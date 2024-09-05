@@ -2,8 +2,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.window import Window
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, BooleanType, TimestampType
 from pyspark.sql.functions import from_json, col, to_timestamp, sum as spark_sum, count as spark_count, when, last, lit, current_timestamp
-from pyspark.sql.streaming import GroupState, GroupStateTimeout
 from pyspark.sql import functions as SF
+from pyspark.sql.streaming import GroupState, GroupStateTimeout
 
 class VWAPState:
     def __init__(self, last_vwap=50):

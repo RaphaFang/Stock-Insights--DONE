@@ -105,32 +105,14 @@ async def consumer_to_queue(prefix, queue, topic):
             consumer = await create_consumer("kafka_MA_data")
 
         async for message in consumer:
-            logging.info(f"from data_to_sql_consumer\ngot {message}")
-            raw = message.value.decode("utf-8")
-            logging.info(type(raw))
-            logging.info(raw)
-
-
-            # raw = message.value().decode("utf-8")
-            # logging.info(f"Type of raw: {type(raw)}")
-            # logging.info(f"Raw message: {raw}")
-
-            #     # Load JSON from the decoded string
-            # data = json.loads(raw)
-            # logging.info(f"Parsed JSON: {data}")
-            # logging.info(f"from data_to_sql_consumer\ngot {topic}")
-
-            # if isinstance(raw, dict):
-            #     await queue.put((
-            #             raw.get('symbol'), raw.get('type'), raw.get('MA_type'),
-            #             raw.get('start'), raw.get('end'), raw.get('current_time'),
-            #             raw.get('first_in_window'), raw.get('last_in_window'),
-            #             raw.get('real_data_count'), raw.get('filled_data_count'),
-            #             raw.get('sma_5'), raw.get('sum_of_vwap'),
-            #             raw.get('count_of_vwap'), raw.get('5_data_count')
-            #         ))
-            # else:
-            #     logging.error("期望獲取字典類型數據，但實際獲得了其他類型。跳過此消息。")
+            raw = json.loads(message.value.decode("utf-8"))
+            await queue.put((
+                    raw.get('symbol'), raw.get('type'), raw.get('MA_type'),
+                    raw.get('start'), raw.get('end'), raw.get('current_time'),
+                    raw.get('first_in_window'), raw.get('last_in_window'),
+                    raw.get('real_data_count'), raw.get('filled_data_count'),
+                    raw.get('sma_5'), raw.get('sum_of_vwap'),
+                    raw.get('count_of_vwap'), raw.get('5_data_count')))
 
     except KeyboardInterrupt:
         logging.info("Consumer stopped by user.")
@@ -177,6 +159,7 @@ async def queue_to_mysql(prefix, queue, pool):
                 batch_data.append(data)
                 if len(batch_data) >= 10:  
                     await batch_insert(prefix, pool, table_name, batch_data)
+                    logging.info(f"func. queue_to_mysql --> {len(batch_data)}")
                     batch_data.clear()
             await asyncio.sleep(1)  
 

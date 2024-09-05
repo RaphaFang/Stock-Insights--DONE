@@ -84,6 +84,11 @@ def main():
             result_df = windowed_df.withColumn(
                 "prev_vwap", SF.lag("vwap_price_per_sec", 1).over(window_spec)
             )
+            # 將 prev_vwap 設定為 0 當它為 null
+            result_df = result_df.withColumn(
+                "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(0)).otherwise(SF.col("prev_vwap"))
+            )
+
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
                 SF.when(col("initial_vwap") == 0, SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value)))

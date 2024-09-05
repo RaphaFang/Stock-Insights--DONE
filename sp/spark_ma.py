@@ -87,6 +87,9 @@ def main():
         sma_df = sma_df.withColumn(
             "prev_sma", SF.lag(column_name, 1).over(window_spec)
         )
+        result_df = result_df.withColumn(
+            "prev_sma", SF.when(SF.col("prev_sma").isNull(), SF.lit(0)).otherwise(SF.col("prev_vwap"))
+        )
         sma_df = sma_df.withColumn(
             column_name, 
             SF.when(col("initial_sma") == 0, SF.coalesce(col("prev_sma"), SF.lit(current_broadcast_value)))

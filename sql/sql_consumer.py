@@ -71,7 +71,7 @@ async def check_today_table_exists(pool, prefix):
                         `yesterday_price` FLOAT,
                         `price_change_percentage` FLOAT
                     )
-                """)
+                """)  
             await conn.commit()
     return table_name
 
@@ -106,13 +106,22 @@ async def consumer_to_queue(prefix, queue, topic):
 
         async for message in consumer:
             raw = json.loads(message.value.decode("utf-8"))
-            await queue.put((
-                    raw.get('symbol'), raw.get('type'), raw.get('MA_type'),
-                    raw.get('start'), raw.get('end'), raw.get('current_time'),
-                    raw.get('first_in_window'), raw.get('last_in_window'),
-                    raw.get('real_data_count'), raw.get('filled_data_count'),
-                    raw.get('sma_5'), raw.get('sum_of_vwap'),
-                    raw.get('count_of_vwap'), raw.get('5_data_count')))
+            if prefix=="sec":
+                await queue.put((
+                        raw.get('symbol'), raw.get('type'),
+                        raw.get('start'), raw.get('end'), raw.get('current_time'),
+                        raw.get('last_data_time'), raw.get('real_data_count'),
+                        raw.get('filled_data_count'), raw.get('real_or_filled'),
+                        raw.get('vwap_price_per_sec'), raw.get('size_per_sec'),
+                        raw.get('volume_till_now'), raw.get('yesterday_price'),raw.get('price_change_percentage')))                
+            elif prefix=="MA":
+                await queue.put((
+                        raw.get('symbol'), raw.get('type'), raw.get('MA_type'),
+                        raw.get('start'), raw.get('end'), raw.get('current_time'),
+                        raw.get('first_in_window'), raw.get('last_in_window'),
+                        raw.get('real_data_count'), raw.get('filled_data_count'),
+                        raw.get('sma_5'), raw.get('sum_of_vwap'),
+                        raw.get('count_of_vwap'), raw.get('5_data_count')))
 
     except KeyboardInterrupt:
         logging.info("Consumer stopped by user.")

@@ -16,6 +16,7 @@ stock_to_partition = {
     "6115": 4
 }
 subscribe_list = ["2330", "0050", "00670L", "2454", "6115"]
+# ['2888', '00632R', '00680L', '00929', '2317', '00715L']
 msg_queue = {symbol: asyncio.Queue() for symbol in stock_to_partition}
 
 MA_queue = asyncio.Queue()

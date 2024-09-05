@@ -61,7 +61,7 @@ def main():
             ).agg(
                 SF.sum(SF.when(col("type") != "heartbeat", col("price") * col("size")).otherwise(0)).alias("price_time_size"),
                 SF.sum(SF.when(col("type") != "heartbeat", col("size")).otherwise(0)).alias("size_per_sec"),
-                SF.last(SF.when(col("type") != "heartbeat", col("volume")), ignorenulls=True).alias("volume_till_now"),
+                SF.last(SF.when(col("type") != "heartbeat", col("volume")).otherwise(0)).alias("volume_till_now"),
                 SF.last("time", ignorenulls=True).alias("last_data_time"),
                 SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
                 SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),

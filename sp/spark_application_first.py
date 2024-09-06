@@ -37,7 +37,7 @@ def main():
         # 使用 pipelining
         # .config("spark.executor.cores", "2") \
 
-    b_vwap = 0
+    b_vwap = None
     broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
 
     kafka_df = spark.readStream \
@@ -88,8 +88,12 @@ def main():
 
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
-                    SF.when(col("vwap_price_per_sec") == 0, SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value), col("yesterday_price")))
+                SF.when(
+                    col("vwap_price_per_sec") == 0,
+                    SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value), col("yesterday_price"))
+                ).otherwise(col("vwap_price_per_sec"))
             )
+
             # result_df = result_df.withColumn(
             #     "vwap_price_per_sec",
             #     SF.when(col("vwap_price_per_sec") == 0, SF.coalesce(col("prev_vwap")), SF.lit("yesterday_price")) # , SF.lit(current_broadcast_value)

@@ -103,11 +103,17 @@ def main():
 
             window_spec = Window.partitionBy("symbol").orderBy("window.start")
             windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
-            # 下方式重新負值的機制
-            # last_non_zero_sma = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
-            # if last_non_zero_sma:
-            #     broadcast_vwap.unpersist()
-            #     broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_sma["vwap_price_per_sec"])
+
+            # new_vwap = result_df.agg(SF.last("vwap_price_per_sec")).collect()[0][0]
+            # if new_vwap is not None and new_vwap > 0:
+            #     broadcast_vwap.unpersist()  # 先卸載原來的廣播
+            #     broadcast_vwap = spark.sparkContext.broadcast(new_vwap)
+
+
+            last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
+            if last_non_zero_vwap:
+                broadcast_vwap.unpersist()
+                broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
 
 
             # current_broadcast_value = broadcast_vwap.value
@@ -124,10 +130,10 @@ def main():
             #     .otherwise(col("initial_vwap"))
             # )
 
-            # last_non_zero_sma = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
-            # if last_non_zero_sma:
+            # last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
+            # if last_non_zero_vwap:
             #     broadcast_vwap.unpersist()
-            #     broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_sma["vwap_price_per_sec"])
+            #     broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
 
             result_df = result_df.withColumn(
                 "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")

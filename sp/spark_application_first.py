@@ -75,6 +75,8 @@ def main():
 
 
             current_broadcast_value = broadcast_vwap.value
+            window_spec = Window.partitionBy("symbol").orderBy("window.start")
+            windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
             result_df = windowed_df.withColumn(
                 "prev_vwap", SF.lag("vwap_price_per_sec", 2).over(window_spec)
@@ -101,8 +103,6 @@ def main():
                 ).otherwise(0)
             )
 
-            window_spec = Window.partitionBy("symbol").orderBy("window.start")
-            windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
             # new_vwap = result_df.agg(SF.last("vwap_price_per_sec")).collect()[0][0]
             # if new_vwap is not None and new_vwap > 0:

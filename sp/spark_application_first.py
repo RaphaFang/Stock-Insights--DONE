@@ -84,13 +84,13 @@ def main():
             # result_df = result_df.withColumn(
             #     "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(current_broadcast_value))
             # )
-            result_df = result_df.withColumn(
-                "vwap_price_per_sec",
-                SF.when(
-                    col("vwap_price_per_sec") == 0,
-                    SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value), col("yesterday_price"))
-                ).otherwise(col("vwap_price_per_sec"))
-            )
+            # result_df = result_df.withColumn(
+            #     "vwap_price_per_sec",
+            #     SF.when(
+            #         col("vwap_price_per_sec") == 0,
+            #         SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value), col("yesterday_price"))
+            #     ).otherwise(col("vwap_price_per_sec"))
+            # )
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
                 SF.when(
@@ -104,12 +104,12 @@ def main():
                 ).otherwise(col("vwap_price_per_sec"))
             )
 
-            # result_df = result_df.withColumn(
-            #     "price_change_percentage",
-            #     SF.when(col("yesterday_price") != 0, 
-            #         SF.round(((col("vwap_price_per_sec") - col("yesterday_price")) / col("yesterday_price")) * 100, 2)
-            #     ).otherwise(0)
-            # )
+            result_df = result_df.withColumn(
+                "price_change_percentage",
+                SF.when(col("yesterday_price") != 0, 
+                    SF.round(((col("vwap_price_per_sec") - col("yesterday_price")) / col("yesterday_price")) * 100, 2)
+                ).otherwise(0)
+            )
 
 
             # new_vwap = result_df.agg(SF.last("vwap_price_per_sec")).collect()[0][0]

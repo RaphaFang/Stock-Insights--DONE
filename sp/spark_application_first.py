@@ -48,7 +48,7 @@ def main():
             last_value = None
         else:
             last_value = last_vwap_data[0]
-        last_vwap_data[0] = current_vwap if current_vwap != 0 else last_vwap_data[0]
+        last_vwap_data[0] = current_vwap # if current_vwap != 0 else last_vwap_data[0]
         return last_value
 
     update_vwap_udf = udf(update_vwap, DoubleType())
@@ -96,9 +96,9 @@ def main():
                     SF.coalesce(col("prev_vwap"), col("yesterday_price"))  # , SF.lit(current_broadcast_value)
                 ).otherwise(col("vwap_price_per_sec"))
             )
-            result_df = windowed_df.withColumn(
-                "prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
-            )
+            # result_df = windowed_df.withColumn(
+            #     "prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
+            # )
             result_df = result_df.withColumn(
                 "price_change_percentage",
                 SF.when(col("yesterday_price") != 0, 

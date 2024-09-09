@@ -75,7 +75,7 @@ def main():
 
 
             current_broadcast_value = broadcast_vwap.value
-            result_df = result_df.withColumn(
+            result_df = windowed_df.withColumn(
                 "current_broadcast_value",
                 SF.lit(current_broadcast_value)
             )

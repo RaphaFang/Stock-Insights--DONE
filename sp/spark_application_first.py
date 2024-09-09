@@ -39,8 +39,8 @@ def main():
         # 使用 pipelining
         # .config("spark.executor.cores", "2") \
 
-    # b_vwap = 555
-    # broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
+    b_vwap = 555
+    broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
 
     last_vwap_data = [None] #為了讓他可以
     def update_vwap(current_vwap):
@@ -89,11 +89,13 @@ def main():
             result_df = windowed_df.withColumn(
                 "prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
             )
+            
+            current_broadcast_value = broadcast_vwap.value
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
                 SF.when(
                     col("vwap_price_per_sec") == 0,
-                    SF.coalesce(col("prev_vwap"), col("yesterday_price"))  # , SF.lit(current_broadcast_value)
+                    SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value),col("yesterday_price"))  # , SF.lit(current_broadcast_value)
                 ).otherwise(col("vwap_price_per_sec"))
             )
             # result_df = windowed_df.withColumn(
@@ -134,6 +136,13 @@ def main():
                 .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
                 .option("topic", "kafka_per_sec_data") \
                 .save()
+            
+            last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0) \
+                .orderBy("window.end", ascending=False) \
+                .first()
+            if last_non_zero_vwap:
+                broadcast_vwap.unpersist()
+                broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
             # result_df = result_df.withColumn(
             #     "current_broadcast_value",
             #     SF.lit(current_broadcast_value)

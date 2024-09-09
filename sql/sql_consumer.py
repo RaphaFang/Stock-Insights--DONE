@@ -122,6 +122,7 @@ async def consumer_to_queue(prefix, queue, topic):
                         raw.get('real_data_count'), raw.get('filled_data_count'),
                         raw.get('sma_5'), raw.get('sum_of_vwap'),
                         raw.get('count_of_vwap'), raw.get('5_data_count')))
+                # 這邊要調整，可以接收不同的ma
 
     except KeyboardInterrupt:
         logging.info("Consumer stopped by user.")

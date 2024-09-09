@@ -4,7 +4,7 @@ from kaf.topic_creater import create_topic
 from producer.ws_producer import send_batch_to_kafka, real_data_to_batch, heartbeat_data_to_batch
 from ws.fugle_ws import AsyncWSHandler
 from sql.sql_consumer import build_async_sql_pool, consumer_to_queue, queue_to_mysql
-# from consumer.consumer_by_partition import create_consumer_by_partition
+from consumer.consumer_by_partition import create_consumer_by_partition
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # 後續調整成aiologger
@@ -41,19 +41,19 @@ async def async_main():
     # 第3.1站，kafka_per_sec_data，送spark
     # 第3.2站，kafka_per_sec_data，fastapi-ws 建立消費者直接出去
     # 第3.3站，kafka_per_sec_data，資料寫進DB
-    sec_to_sql_task = asyncio.create_task(consumer_to_queue("sec", per_sec_queue, 'kafka_per_sec_data'))
-    sec_writer_task = asyncio.create_task(queue_to_mysql('sec',per_sec_queue, pool))
+    # sec_to_sql_task = asyncio.create_task(consumer_to_queue("sec", per_sec_queue, 'kafka_per_sec_data'))
+    # sec_writer_task = asyncio.create_task(queue_to_mysql('sec',per_sec_queue, pool))
 
     # 第4.1站，kafka_MA_data，fastapi-ws 建立消費者直接出去
     # 第4.2站，kafka_MA_data，資料寫進DB
-    ma_to_sql_task = asyncio.create_task(consumer_to_queue('MA',MA_queue, 'kafka_MA_data'))
-    ma_writer_task = asyncio.create_task(queue_to_mysql("MA", MA_queue, pool))
+    # ma_to_sql_task = asyncio.create_task(consumer_to_queue('MA',MA_queue, 'kafka_MA_data'))
+    # ma_writer_task = asyncio.create_task(queue_to_mysql("MA", MA_queue, pool))
 
     # 測試區
-    # consumer_task = asyncio.create_task(create_consumer_by_partition("kafka_raw_data"))
+    consumer_task = asyncio.create_task(create_consumer_by_partition("kafka_per_sec_data"))
 
-    try: 
-        await asyncio.gather(heartbeat_task, websocket_task, producer_task, sec_to_sql_task, sec_writer_task, ma_to_sql_task, ma_writer_task)
+    try: # , sec_to_sql_task, sec_writer_task, ma_to_sql_task, ma_writer_task
+        await asyncio.gather(heartbeat_task, websocket_task, producer_task, consumer_task)
     except Exception as e:
         logging.error(f"Error in main: {e}")
     except KeyboardInterrupt:

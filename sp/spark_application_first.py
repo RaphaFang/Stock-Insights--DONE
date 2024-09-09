@@ -62,8 +62,8 @@ def main():
         .option("failOnDataLoss", "false") \
         .load()
     
-    def process_batch(df, epoch_id): # broadcast_vwap
-        global broadcast_vwap
+    def process_batch(df, epoch_id, broadcast_vwap): # broadcast_vwap
+        # global broadcast_vwap
         try:
             df = df.selectExpr("CAST(value AS STRING) as json_data") \
                 .select(from_json(col("json_data"), schema).alias("data")) \
@@ -92,9 +92,10 @@ def main():
                 "prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
             )
             
-            current_broadcast_value = broadcast_vwap.value
-            if current_broadcast_value == -1:
-                current_broadcast_value = None
+            current_broadcast_value = None if broadcast_vwap.value == -1 else broadcast_vwap.value
+            # if current_broadcast_value == -1:
+            #     current_broadcast_value = None
+
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
                 SF.when(
@@ -152,7 +153,7 @@ def main():
             print(f"Error processing batch {epoch_id}: {e}")
 
     query = kafka_df.writeStream \
-        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
+        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id, broadcast_vwap)) \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
         .start()
         # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了

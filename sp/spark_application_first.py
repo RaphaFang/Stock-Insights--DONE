@@ -75,20 +75,14 @@ def main():
 
 
             current_broadcast_value = broadcast_vwap.value
-            result_df = windowed_df.withColumn(
-                "current_broadcast_value",
-                SF.lit(current_broadcast_value)
-            )
+
 
             window_spec = Window.partitionBy("symbol").orderBy("window.start")
-            # windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
             result_df = windowed_df.withColumn(
-                "prev_vwap", SF.lag("vwap_price_per_sec", 2).over(window_spec)
+                "prev_vwap", SF.lag("vwap_price_per_sec", 1).over(window_spec)
             )
-            # result_df = result_df.withColumn(
-            #     "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(current_broadcast_value))
-            # )
+
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
                 SF.when(
@@ -102,6 +96,10 @@ def main():
                 SF.when(col("yesterday_price") != 0, 
                     SF.round(((col("vwap_price_per_sec") - col("yesterday_price")) / col("yesterday_price")) * 100, 2)
                 ).otherwise(0)
+            )
+            result_df = result_df.withColumn(
+                "current_broadcast_value",
+                SF.lit(current_broadcast_value)
             )
 
             last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
@@ -130,6 +128,17 @@ def main():
                 "price_change_percentage",
             )
 
+            result_df.selectExpr(
+                "CAST(symbol AS STRING) AS key",
+                "to_json(struct(*)) AS value"
+            ).write \
+                .format("kafka") \
+                .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
+                .option("topic", "kafka_per_sec_data") \
+                .save()
+            
+        except Exception as e:
+            print(f"Error processing batch {epoch_id}: {e}")
             # current_broadcast_value = broadcast_vwap.value
             # windowed_df = windowed_df.withColumn(
             #     "initial_vwap",
@@ -150,17 +159,6 @@ def main():
             #     broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
 
 
-            result_df.selectExpr(
-                "CAST(symbol AS STRING) AS key",
-                "to_json(struct(*)) AS value"
-            ).write \
-                .format("kafka") \
-                .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
-                .option("topic", "kafka_per_sec_data") \
-                .save()
-            
-        except Exception as e:
-            print(f"Error processing batch {epoch_id}: {e}")
  
             
     query = kafka_df.writeStream \

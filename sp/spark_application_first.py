@@ -39,7 +39,7 @@ def main():
         # 使用 pipelining
         # .config("spark.executor.cores", "2") \
 
-    b_vwap = 555
+    b_vwap = None
     broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
 
     last_vwap_data = [None] #為了讓他可以
@@ -62,7 +62,8 @@ def main():
         .option("failOnDataLoss", "false") \
         .load()
     
-    def process_batch(df, epoch_id, broadcast_vwap): # broadcast_vwap
+    def process_batch(df, epoch_id): # broadcast_vwap
+        global broadcast_vwap
         try:
             df = df.selectExpr("CAST(value AS STRING) as json_data") \
                 .select(from_json(col("json_data"), schema).alias("data")) \
@@ -79,7 +80,8 @@ def main():
                 SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
                 SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
                 SF.last("yesterday_price", ignorenulls=True).alias("yesterday_price"),
-            ).orderBy("window.start")
+            )
+            # .orderBy("window.start")
 
             windowed_df = windowed_df.withColumn(
                 "vwap_price_per_sec",
@@ -95,12 +97,12 @@ def main():
                 "vwap_price_per_sec",
                 SF.when(
                     col("vwap_price_per_sec") == 0,
-                    SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value),col("yesterday_price"))  # , SF.lit(current_broadcast_value)
+                    SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value) ,col("yesterday_price"))  # , SF.lit(current_broadcast_value)
                 ).otherwise(col("vwap_price_per_sec"))
             )
-            # result_df = windowed_df.withColumn(
-            #     "prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
-            # )
+            result_df = windowed_df.withColumn(
+                "prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
+            )
             result_df = result_df.withColumn(
                 "price_change_percentage",
                 SF.when(col("yesterday_price") != 0, 
@@ -111,6 +113,7 @@ def main():
                 "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
             )
 
+            result_df = result_df.orderBy("window.end")
             result_df.select(
                 "symbol",
                 SF.lit("per_sec_data").alias("type"),
@@ -137,9 +140,10 @@ def main():
                 .option("topic", "kafka_per_sec_data") \
                 .save()
             
-            last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0) \
-                .orderBy("window.end", ascending=False) \
-                .first()
+            # last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0) \
+            #     .orderBy("window.end", ascending=False) \
+            #     .first()
+            last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0).tail(1)[0]
             if last_non_zero_vwap:
                 broadcast_vwap.unpersist()
                 broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
@@ -168,7 +172,7 @@ def main():
             print(f"Error processing batch {epoch_id}: {e}")
 
     query = kafka_df.writeStream \
-        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id, broadcast_vwap)) \
+        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
         .start()
         # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了

@@ -5,16 +5,12 @@ services:
       - ./sp:/opt/spark-apps
       - ./.ivy2:/opt/bitnami/spark/.ivy2
       - ./checkpoints:/app/tmp/spark_checkpoints
-      - ./java_udf:/opt/java_udf
-      # test, 這邊加上java_udf檔案，
     working_dir: /opt/spark-apps
     ports:
       - "4040-4045:4040-4045"
     network_mode: host
     command: >
       bash -c "
-      javac -cp /opt/bitnami/spark/jars/* /opt/java_udf/VWAPStatefulUDF.java &&
-      jar -cvf /opt/spark-apps/vwap_udf.jar -C /opt/java_udf/ VWAPStatefulUDF.class &&
       pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
       mkdir -p /opt/bitnami/spark/.ivy2/local &&
       spark-submit

@@ -71,10 +71,15 @@ def main():
                 "vwap_price_per_sec",
                 SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
                 .otherwise(0)
-            ) 
+            )
 
 
             current_broadcast_value = broadcast_vwap.value
+            result_df = result_df.withColumn(
+                "current_broadcast_value",
+                SF.lit(current_broadcast_value)
+            )
+
             window_spec = Window.partitionBy("symbol").orderBy("window.start")
             windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
@@ -84,23 +89,11 @@ def main():
             # result_df = result_df.withColumn(
             #     "prev_vwap", SF.when(SF.col("prev_vwap").isNull(), SF.lit(current_broadcast_value))
             # )
-            # result_df = result_df.withColumn(
-            #     "vwap_price_per_sec",
-            #     SF.when(
-            #         col("vwap_price_per_sec") == 0,
-            #         SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value), col("yesterday_price"))
-            #     ).otherwise(col("vwap_price_per_sec"))
-            # )
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
                 SF.when(
-                    (col("vwap_price_per_sec") == 0) & (col("prev_vwap").isNotNull()), col("prev_vwap")
-                ).when(
-                    (col("vwap_price_per_sec") == 0) & (col("prev_vwap").isNull()) & (SF.lit(current_broadcast_value) != 0),
-                    SF.lit(current_broadcast_value)
-                ).when(
-                    (col("vwap_price_per_sec") == 0) & (col("prev_vwap").isNull()) & (SF.lit(current_broadcast_value) == 0),
-                    col("yesterday_price")
+                    col("vwap_price_per_sec") == 0,
+                    SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value), col("yesterday_price"))
                 ).otherwise(col("vwap_price_per_sec"))
             )
 
@@ -111,18 +104,31 @@ def main():
                 ).otherwise(0)
             )
 
-
-            # new_vwap = result_df.agg(SF.last("vwap_price_per_sec")).collect()[0][0]
-            # if new_vwap is not None and new_vwap > 0:
-            #     broadcast_vwap.unpersist()  # 先卸載原來的廣播
-            #     broadcast_vwap = spark.sparkContext.broadcast(new_vwap)
-
-
             last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0).select("vwap_price_per_sec").orderBy("window.end", ascending=False).first()
             if last_non_zero_vwap:
                 broadcast_vwap.unpersist()
                 broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
 
+            result_df = result_df.withColumn(
+                "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
+            ).select(
+                "symbol",
+                SF.lit("per_sec_data").alias("type"),
+                "window.start",
+                "window.end",
+                SF.current_timestamp().alias("current_time"),
+                "last_data_time",
+                "real_data_count",
+                "filled_data_count",
+                "real_or_filled",
+                "vwap_price_per_sec",
+                "prev_vwap",
+                "current_broadcast_value",
+                "size_per_sec",
+                "volume_till_now",
+                "yesterday_price",
+                "price_change_percentage",
+            )
 
             # current_broadcast_value = broadcast_vwap.value
             # windowed_df = windowed_df.withColumn(
@@ -143,24 +149,6 @@ def main():
             #     broadcast_vwap.unpersist()
             #     broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
 
-            result_df = result_df.withColumn(
-                "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
-            ).select(
-                "symbol",
-                SF.lit("per_sec_data").alias("type"),
-                "window.start",
-                "window.end",
-                SF.current_timestamp().alias("current_time"),
-                "last_data_time",
-                "real_data_count",
-                "filled_data_count",
-                "real_or_filled",
-                "vwap_price_per_sec",
-                "size_per_sec",
-                "volume_till_now",
-                "yesterday_price",
-                "price_change_percentage",
-            )
 
             result_df.selectExpr(
                 "CAST(symbol AS STRING) AS key",

@@ -75,13 +75,13 @@ def main():
 
 
             current_broadcast_value = broadcast_vwap.value
-            # result_df = windowed_df.withColumn(
-            #     "current_broadcast_value",
-            #     SF.lit(current_broadcast_value)
-            # )
+            result_df = windowed_df.withColumn(
+                "current_broadcast_value",
+                SF.lit(current_broadcast_value)
+            )
 
             window_spec = Window.partitionBy("symbol").orderBy("window.start")
-            windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
+            # windowed_df = windowed_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 
             result_df = windowed_df.withColumn(
                 "prev_vwap", SF.lag("vwap_price_per_sec", 2).over(window_spec)
@@ -111,8 +111,6 @@ def main():
 
             result_df = result_df.withColumn(
                 "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
-            ).withColumn(
-                "current_broadcast_value", SF.lit(current_broadcast_value)  # 確認這裡的寫法
             ).select(
                 "symbol",
                 SF.lit("per_sec_data").alias("type"),

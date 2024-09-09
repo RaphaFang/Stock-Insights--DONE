@@ -39,7 +39,7 @@ def main():
         # 使用 pipelining
         # .config("spark.executor.cores", "2") \
 
-    b_vwap = None
+    b_vwap = -1
     broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
 
     last_vwap_data = [None] #為了讓他可以
@@ -93,6 +93,8 @@ def main():
             )
             
             current_broadcast_value = broadcast_vwap.value
+            if current_broadcast_value == -1:
+                current_broadcast_value = None
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
                 SF.when(
@@ -140,13 +142,24 @@ def main():
                 .option("topic", "kafka_per_sec_data") \
                 .save()
             
-            # last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0) \
-            #     .orderBy("window.end", ascending=False) \
-            #     .first()
-            last_non_zero_vwap = result_df.filter(col("vwap_price_per_sec") != 0).tail(1)[0]
+
+            last_non_zero_vwap = result_df.tail(1)[0]
             if last_non_zero_vwap:
                 broadcast_vwap.unpersist()
                 broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
+
+        except Exception as e:
+            print(f"Error processing batch {epoch_id}: {e}")
+
+    query = kafka_df.writeStream \
+        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
+        .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
+        .start()
+        # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了
+    query.awaitTermination()
+
+if __name__ == "__main__":
+    main()
             # result_df = result_df.withColumn(
             #     "current_broadcast_value",
             #     SF.lit(current_broadcast_value)
@@ -168,18 +181,6 @@ def main():
             #     broadcast_vwap.unpersist()
             #     broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
             
-        except Exception as e:
-            print(f"Error processing batch {epoch_id}: {e}")
-
-    query = kafka_df.writeStream \
-        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
-        .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
-        .start()
-        # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了
-    query.awaitTermination()
-
-if __name__ == "__main__":
-    main()
             # current_broadcast_value = broadcast_vwap.value
             # windowed_df = windowed_df.withColumn(
             #     "initial_vwap",

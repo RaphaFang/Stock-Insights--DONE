@@ -4,7 +4,7 @@ from pyspark.sql.types import StructType, StructField, StringType, DoubleType, I
 from pyspark.sql.functions import from_json, col, window, sum as spark_sum, count as spark_count,avg, last, lit, to_timestamp, current_timestamp
 from pyspark.sql.functions import current_timestamp, window, when, lit, coalesce
 from pyspark.sql import functions as SF
-from pyspark.sql.functions import udf
+# from pyspark.sql.functions import udf
 
 
 def main():
@@ -35,23 +35,11 @@ def main():
         .config("spark.sql.streaming.offset.management.enabled", "true") \
         .config("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.HDFSBackedStateStoreProvider") \
         .getOrCreate()
+        # .config("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider") \
+        # .config("spark.sql.streaming.stateStore.rocksdb.changelogCheckpointing.enabled", "true") \
         # 確保有開啟 State Rebalancing 和 Enhanced Offset Management
         # 使用 pipelining
         # .config("spark.executor.cores", "2") \
-
-    b_vwap = -1
-    broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
-
-    last_vwap_data = [None] #為了讓他可以
-    def update_vwap(current_vwap):
-        if last_vwap_data[0] is None:
-            last_value = None
-        else:
-            last_value = last_vwap_data[0]
-        last_vwap_data[0] = current_vwap # if current_vwap != 0 else last_vwap_data[0]
-        return last_value
-
-    update_vwap_udf = udf(update_vwap, DoubleType())
 
     kafka_df = spark.readStream \
         .format("kafka") \
@@ -62,7 +50,7 @@ def main():
         .option("failOnDataLoss", "false") \
         .load()
     
-    def process_batch(df, epoch_id, broadcast_vwap): # broadcast_vwap
+    def process_batch(df, epoch_id): # broadcast_vwap
         # global broadcast_vwap
         try:
             df = df.selectExpr("CAST(value AS STRING) as json_data") \
@@ -87,25 +75,6 @@ def main():
                 SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
                 .otherwise(0)
             )
-            result_df = windowed_df.withColumn(
-                "first_prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
-            )
-            
-            current_broadcast_value = None if broadcast_vwap.value == -1 else broadcast_vwap.value
-            result_df = result_df.withColumn(
-                "current_broadcast_value", SF.lit(current_broadcast_value)
-            )
-
-            result_df = result_df.withColumn(
-                "vwap_price_per_sec",
-                SF.when(
-                    col("vwap_price_per_sec") == 0,
-                    SF.coalesce(col("first_prev_vwap"), SF.lit(current_broadcast_value) ,col("yesterday_price"))  # , SF.lit(current_broadcast_value)
-                ).otherwise(col("vwap_price_per_sec"))
-            )
-            # result_df = windowed_df.withColumn(
-            #     "second_prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
-            # )# !明天這邊調整成first prev_vwap跟 second prev_vwap
             result_df = result_df.withColumn(
                 "price_change_percentage",
                 SF.when(col("yesterday_price") != 0, 
@@ -128,13 +97,10 @@ def main():
                 "filled_data_count",
                 "real_or_filled",
                 "vwap_price_per_sec",
-                "first_prev_vwap",
-                "current_broadcast_value",
                 "size_per_sec",
                 "volume_till_now",
                 "yesterday_price",
                 "price_change_percentage",
-                # "second_prev_vwap",
             ).selectExpr(
                 "CAST(symbol AS STRING) AS key",
                 "to_json(struct(*)) AS value"
@@ -144,17 +110,11 @@ def main():
                 .option("topic", "kafka_per_sec_data") \
                 .save()
             
-
-            last_non_zero_vwap = result_df.tail(1)[0]
-            if last_non_zero_vwap:
-                broadcast_vwap.unpersist()
-                broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
-
         except Exception as e:
             print(f"Error processing batch {epoch_id}: {e}")
 
     query = kafka_df.writeStream \
-        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id, broadcast_vwap)) \
+        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
         .start()
         # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了
@@ -162,6 +122,42 @@ def main():
 
 if __name__ == "__main__":
     main()
+        # b_vwap = -1
+    # broadcast_vwap = spark.sparkContext.broadcast(b_vwap)
+
+    # last_vwap_data = [None] #為了讓他可以
+    # def update_vwap(current_vwap):
+    #     if last_vwap_data[0] is None:
+    #         last_value = None
+    #     else:
+    #         last_value = last_vwap_data[0]
+    #     last_vwap_data[0] = current_vwap # if current_vwap != 0 else last_vwap_data[0]
+    #     return last_value
+
+    # update_vwap_udf = udf(update_vwap, DoubleType())
+
+            # result_df = windowed_df.withColumn(
+            #     "first_prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
+            # )
+            
+            # current_broadcast_value = None if broadcast_vwap.value == -1 else broadcast_vwap.value
+            # result_df = result_df.withColumn(
+            #     "current_broadcast_value", SF.lit(current_broadcast_value)
+            # )
+
+            # result_df = result_df.withColumn(
+            #     "vwap_price_per_sec",
+            #     SF.when(
+            #         col("vwap_price_per_sec") == 0,
+            #         SF.coalesce(col("first_prev_vwap") ,col("yesterday_price"))  # , SF.lit(current_broadcast_value)
+            #     ).otherwise(col("vwap_price_per_sec"))
+            # )
+    
+            # last_non_zero_vwap = result_df.tail(1)[0]
+            # if last_non_zero_vwap:
+            #     broadcast_vwap.unpersist()
+            #     broadcast_vwap = spark.sparkContext.broadcast(last_non_zero_vwap["vwap_price_per_sec"])
+    
             # result_df = result_df.withColumn(
             #     "current_broadcast_value",
             #     SF.lit(current_broadcast_value)

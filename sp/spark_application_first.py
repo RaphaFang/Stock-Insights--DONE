@@ -50,8 +50,7 @@ def main():
         .option("failOnDataLoss", "false") \
         .load()
     
-    def process_batch(df, epoch_id): # broadcast_vwap
-        # global broadcast_vwap
+    def process_batch(df, epoch_id):
         try:
             df = df.selectExpr("CAST(value AS STRING) as json_data") \
                 .select(from_json(col("json_data"), schema).alias("data")) \
@@ -68,7 +67,7 @@ def main():
                 SF.count(SF.when(col("type") != "heartbeat", col("symbol"))).alias("real_data_count"),
                 SF.count(SF.when(col("type") == "heartbeat", col("symbol"))).alias("filled_data_count"),
                 SF.last("yesterday_price", ignorenulls=True).alias("yesterday_price"),
-            ).orderBy("window.start")
+            )#.orderBy("window.start")
 
             result_df = windowed_df.withColumn(
                 "vwap_price_per_sec",
@@ -85,7 +84,7 @@ def main():
                 "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
             )
 
-            # result_df = result_df.orderBy("window.end") #!就是這個排序，效率超級差
+            result_df = result_df.orderBy("window.start") #!就是這個排序，效率超級差
             result_df.select(
                 "symbol",
                 SF.lit("per_sec_data").alias("type"),

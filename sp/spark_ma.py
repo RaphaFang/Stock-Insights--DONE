@@ -63,7 +63,7 @@ def main():
             SF.collect_list("start").alias("start_times"),
             SF.count(SF.when(col("real_or_filled") == "real", col("symbol"))).alias("real_data_count"),
             SF.count(SF.when(col("real_or_filled") != "real", col("symbol"))).alias("filled_data_count"),
-        )#.orderBy("window.start")
+        )#.orderBy("window.start") ##這邊的排序會將聚合前，不同節點資料調動，所以理論上會更消耗效能
 
         sma_df = sma_df.withColumn(
             "sma_value",
@@ -71,9 +71,11 @@ def main():
                 SF.round(col('sum_of_vwap') / col('count_of_vwap'), 2)
             ).otherwise(0)
         )
-    
-        window_spec = Window.partitionBy("symbol").orderBy("window.start")
-        sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
+
+        sma_df = sma_df.orderBy("window.start") # 這邊的排序理論上是已經聚合後的資料，把這邊的資料排序
+        # window_spec = Window.partitionBy("symbol").orderBy("window.start")
+        # sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
+        ## 這邊的排序是全局的排序，極度耗費效能，因為要shuffle
 
         sma_df = sma_df.select(            
             col("symbol"),

@@ -92,8 +92,9 @@ def main():
             )
             
             current_broadcast_value = None if broadcast_vwap.value == -1 else broadcast_vwap.value
-            # if current_broadcast_value == -1:
-            #     current_broadcast_value = None
+            result_df = result_df.withColumn(
+                "current_broadcast_value", SF.lit(current_broadcast_value)
+            )
 
             result_df = result_df.withColumn(
                 "vwap_price_per_sec",
@@ -102,9 +103,9 @@ def main():
                     SF.coalesce(col("prev_vwap"), SF.lit(current_broadcast_value) ,col("yesterday_price"))  # , SF.lit(current_broadcast_value)
                 ).otherwise(col("vwap_price_per_sec"))
             )
-            result_df = windowed_df.withColumn(
-                "prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
-            )
+            # result_df = windowed_df.withColumn(
+            #     "prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
+            # )# !明天這邊調整成first prev_vwap跟 second prev_vwap
             result_df = result_df.withColumn(
                 "price_change_percentage",
                 SF.when(col("yesterday_price") != 0, 
@@ -115,7 +116,7 @@ def main():
                 "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
             )
 
-            # result_df = result_df.orderBy("window.end")
+            # result_df = result_df.orderBy("window.end") #!就是這個排序，效率超級差
             result_df.select(
                 "symbol",
                 SF.lit("per_sec_data").alias("type"),
@@ -128,11 +129,11 @@ def main():
                 "real_or_filled",
                 "vwap_price_per_sec",
                 "prev_vwap",
+                "current_broadcast_value",
                 "size_per_sec",
                 "volume_till_now",
                 "yesterday_price",
                 "price_change_percentage",
-                # "current_broadcast_value",
             ).selectExpr(
                 "CAST(symbol AS STRING) AS key",
                 "to_json(struct(*)) AS value"

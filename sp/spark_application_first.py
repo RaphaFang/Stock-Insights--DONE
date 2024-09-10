@@ -88,7 +88,7 @@ def main():
                 .otherwise(0)
             )
             result_df = windowed_df.withColumn(
-                "1_prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
+                "first_prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
             )
             
             current_broadcast_value = None if broadcast_vwap.value == -1 else broadcast_vwap.value
@@ -104,7 +104,7 @@ def main():
                 ).otherwise(col("vwap_price_per_sec"))
             )
             result_df = windowed_df.withColumn(
-                "2_prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
+                "second_prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
             )# !明天這邊調整成first prev_vwap跟 second prev_vwap
             result_df = result_df.withColumn(
                 "price_change_percentage",
@@ -128,8 +128,8 @@ def main():
                 "filled_data_count",
                 "real_or_filled",
                 "vwap_price_per_sec",
-                "1_prev_vwap",
-                "2_prev_vwap",
+                "first_prev_vwap",
+                "second_prev_vwap",
                 "current_broadcast_value",
                 "size_per_sec",
                 "volume_till_now",

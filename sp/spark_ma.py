@@ -41,16 +41,7 @@ def main():
         # 使用 pipelining
         # 發現都沒用
         # .config("spark.executor.cores", "2") \
-    
-    # b_5ma = 100
-    # b_15ma = 200
-    # b_30ma = 300
 
-    # broadcast_5ma = spark.sparkContext.broadcast(b_5ma)
-    # broadcast_15ma = spark.sparkContext.broadcast(b_15ma)
-    # broadcast_30ma = spark.sparkContext.broadcast(b_30ma)
-
-    
     kafka_df = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
@@ -62,7 +53,7 @@ def main():
 
     # groupBy，spark的groupBy會需要透過Shuffle來處理資料，而Shuffle很消耗 cpu 以及 io，因為他要把資料傳遞到不同的節點，以及全局運算資料
     def calculate_sma(df, window_duration):
-        df_with_watermark = df.withWatermark("start", "15 seconds")
+        df_with_watermark = df.withWatermark("start", "30 seconds")
         sma_df = df_with_watermark.groupBy(
             SF.window(col("start"), f"{window_duration} seconds", "1 second"), col("symbol")
         ).agg(
@@ -72,7 +63,7 @@ def main():
             SF.collect_list("start").alias("start_times"),
             SF.count(SF.when(col("real_or_filled") == "real", col("symbol"))).alias("real_data_count"),
             SF.count(SF.when(col("real_or_filled") != "real", col("symbol"))).alias("filled_data_count"),
-        ).orderBy("window.start")
+        )#.orderBy("window.start")
 
         sma_df = sma_df.withColumn(
             "sma_value",
@@ -81,6 +72,9 @@ def main():
             ).otherwise(0)
         )
     
+        window_spec = Window.partitionBy("symbol").orderBy("window.start")
+        sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
+
         sma_df = sma_df.select(            
             col("symbol"),
             lit("MA_data").alias("type"),
@@ -102,6 +96,19 @@ def main():
         )
         # 切記，會因為算式可能為空，導致輸出出錯，然後numInputRows就一直會是0
         return sma_df
+    
+    # def merge_overlapping_windows(sma_df):
+    #     merged_df = sma_df.withWatermark("start", "15 seconds").groupBy("start", "end", "symbol") \
+    #         .agg(
+    #             spark_sum("sum_of_vwap").alias("merged_sum_of_vwap"),
+    #             spark_sum("count_of_vwap").alias("merged_count_of_vwap")
+    #         ).withColumn(
+    #             "merged_sma_value",
+    #             SF.when(col("merged_count_of_vwap") != 0,
+    #                     SF.round(col("merged_sum_of_vwap") / col("merged_count_of_vwap"), 2)
+    #             ).otherwise(0)
+    #         )
+    #     return merged_df
     
     def send_to_kafka(df):
         df.selectExpr(
@@ -136,7 +143,6 @@ def main():
         .outputMode("update") \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_ma") \
         .start()
-        # .foreachBatch(process_batch) \ , broadcast_5ma, broadcast_15ma, broadcast_30ma
     query.awaitTermination()
 
 if __name__ == "__main__":
@@ -144,6 +150,15 @@ if __name__ == "__main__":
 
 
 # ---------------------------------------------------------------------------------------------------
+        
+    # b_5ma = 100
+    # b_15ma = 200
+    # b_30ma = 300
+
+    # broadcast_5ma = spark.sparkContext.broadcast(b_5ma)
+    # broadcast_15ma = spark.sparkContext.broadcast(b_15ma)
+    # broadcast_30ma = spark.sparkContext.broadcast(b_30ma)
+
         # window_spec = Window.partitionBy("symbol").orderBy("window.start")
         # sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
 

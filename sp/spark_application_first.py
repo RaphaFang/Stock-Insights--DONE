@@ -70,7 +70,7 @@ def main():
                 SF.last("yesterday_price", ignorenulls=True).alias("yesterday_price"),
             ).orderBy("window.start")
 
-            windowed_df = windowed_df.withColumn(
+            result_df = windowed_df.withColumn(
                 "vwap_price_per_sec",
                 SF.when(col("size_per_sec") != 0, col("price_time_size") / col("size_per_sec"))
                 .otherwise(0)

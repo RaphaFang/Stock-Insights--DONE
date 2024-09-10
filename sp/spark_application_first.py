@@ -103,9 +103,9 @@ def main():
                     SF.coalesce(col("first_prev_vwap"), SF.lit(current_broadcast_value) ,col("yesterday_price"))  # , SF.lit(current_broadcast_value)
                 ).otherwise(col("vwap_price_per_sec"))
             )
-            result_df = windowed_df.withColumn(
-                "second_prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
-            )# !明天這邊調整成first prev_vwap跟 second prev_vwap
+            # result_df = windowed_df.withColumn(
+            #     "second_prev_vwap", update_vwap_udf(col("vwap_price_per_sec"))
+            # )# !明天這邊調整成first prev_vwap跟 second prev_vwap
             result_df = result_df.withColumn(
                 "price_change_percentage",
                 SF.when(col("yesterday_price") != 0, 
@@ -129,12 +129,12 @@ def main():
                 "real_or_filled",
                 "vwap_price_per_sec",
                 "first_prev_vwap",
-                "second_prev_vwap",
                 "current_broadcast_value",
                 "size_per_sec",
                 "volume_till_now",
                 "yesterday_price",
                 "price_change_percentage",
+                # "second_prev_vwap",
             ).selectExpr(
                 "CAST(symbol AS STRING) AS key",
                 "to_json(struct(*)) AS value"

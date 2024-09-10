@@ -84,7 +84,7 @@ def main():
                 "real_or_filled", SF.when(col("real_data_count") > 0, "real").otherwise("filled")
             )
 
-            result_df = result_df.orderBy("window.start") #!就是這個排序，效率超級差
+            result_df = result_df.orderBy("window.start") # 其實這個也沒有很消耗效能，昨天不知道為甚麼策出來很慢？？
             result_df.select(
                 "symbol",
                 SF.lit("per_sec_data").alias("type"),

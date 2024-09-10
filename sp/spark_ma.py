@@ -34,12 +34,10 @@ def main():
         .config("spark.sql.streaming.offset.management.enabled", "true") \
         .config("spark.sql.streaming.stateStore.providerClass", "org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider") \
         .config("spark.sql.streaming.stateStore.rocksdb.changelogCheckpointing.enabled", "true") \
-        .config("spark.locality.wait", "10s") \
         .getOrCreate()
+        # .config("spark.locality.wait", "10s") \
         # 上面這是等待將數據調用過來的時間 
-        # 確保有開啟 State Rebalancing 和 Enhanced Offset Management
-        # 使用 pipelining
-        # 發現都沒用
+        # 確保有開啟 State Rebalancing 和 Enhanced Offset Management # 使用 pipelining # 發現都沒用...還是會分批次
         # .config("spark.executor.cores", "2") \
 
     kafka_df = spark.readStream \
@@ -64,53 +62,30 @@ def main():
             SF.count(SF.when(col("real_or_filled") == "real", col("symbol"))).alias("real_data_count"),
             SF.count(SF.when(col("real_or_filled") != "real", col("symbol"))).alias("filled_data_count"),
         )#.orderBy("window.start") ##這邊的排序會將聚合前，不同節點資料調動，所以理論上會更消耗效能
-
-        # sma_df = sma_df.withColumn(
-        #     "sma_value",
-        #     SF.when(col('count_of_vwap') != 0,
-        #         SF.round(col('sum_of_vwap') / col('count_of_vwap'), 2)
-        #     ).otherwise(0)
-        # )
         sma_df = sma_df.withColumn("first_current_time", current_timestamp())
         sma_df = sma_df.orderBy("window.start") # 這邊的排序理論上是已經聚合後的資料，把這邊的資料排序
 
-        # sma_df = sma_df.select(            
-        #     col("symbol"),
-        #     lit("MA_data").alias("type"),
-        #     lit(f"{window_duration}_MA_data").alias("MA_type"),
-        #     col(f"window.start").alias("start"),
-        #     col(f"window.end").alias("end"),
-
-        #     SF.current_timestamp().alias("current_time"),
-        #     # SF.element_at(col("start_times"), 1).alias("first_data_time"),
-        #     # SF.element_at(col("start_times"), -1).alias("last_data_time"),
-
-        #     # col("sma_value"),
-        #     col("sum_of_vwap"),
-        #     col("count_of_vwap"),
-        #     col("window_data_count"),
-            
-        #     col("real_data_count"),
-        #     col("filled_data_count"),
-        # )
         # 切記，會因為算式可能為空，導致輸出出錯，然後numInputRows就一直會是0
         return sma_df
     
     def merge_overlapping_windows(sma_df):
-        merged_df = sma_df.withWatermark("start", "15 seconds").groupBy("start", "end", "symbol") \
-            .agg(
-                SF.sum("sum_of_vwap").alias("m_sum_of_vwap"),
-                SF.sum("count_of_vwap").alias("m_count_of_vwap"),
-                SF.sum("window_data_count").alias("m_window_data_count"),
-                SF.sum("real_data_count").alias("m_real_data_count"),
-                SF.sum("filled_data_count").alias("m_filled_data_count"),
-                SF.min("first_current_time").alias("first_current_time")
-            ).withColumn(
-                "merged_sma_value",
-                SF.when(col("merged_count_of_vwap") != 0,
-                        SF.round(col("merged_sum_of_vwap") / col("merged_count_of_vwap"), 2)
-                ).otherwise(0)
-            )
+        merged_df = sma_df.withWatermark("window.start", "15 seconds").groupBy(
+            col("window.start").alias("start"),
+            col("window.end").alias("end"),
+            col("symbol")
+        ).agg(
+            SF.sum("sum_of_vwap").alias("m_sum_of_vwap"),
+            SF.sum("count_of_vwap").alias("m_count_of_vwap"),
+            SF.sum("window_data_count").alias("m_window_data_count"),
+            SF.sum("real_data_count").alias("m_real_data_count"),
+            SF.sum("filled_data_count").alias("m_filled_data_count"),
+            SF.min("first_current_time").alias("first_current_time")
+        ).withColumn(
+            "merged_sma_value",
+            SF.when(col("merged_count_of_vwap") != 0,
+                    SF.round(col("merged_sum_of_vwap") / col("merged_count_of_vwap"), 2)
+            ).otherwise(0)
+        )
         # merged_df = merged_df.withColumn("m_current_time", current_timestamp())
         return merged_df
     
@@ -119,14 +94,11 @@ def main():
             col("symbol"),
             lit("MA_data").alias("type"),
             lit(f"{window_duration}_MA_data").alias("MA_type"),
-            # col(f"window.start").alias("start"),
-            # col(f"window.end").alias("end"),
+            col(f"window.start").alias("start"),
+            col(f"window.end").alias("end"),
 
             col("first_current_time"),
             SF.current_timestamp().alias("m_current_time"),
-            # SF.element_at(col("start_times"), 1).alias("first_data_time"),
-            # SF.element_at(col("start_times"), -1).alias("last_data_time"),
-
             col("merged_sma_value"),
             col("m_sum_of_vwap"),
             col("m_count_of_vwap"),
@@ -134,6 +106,9 @@ def main():
             
             col("m_real_data_count"),
             col("m_filled_data_count"),
+            # SF.element_at(col("start_times"), 1).alias("first_data_time"),
+            # SF.element_at(col("start_times"), -1).alias("last_data_time"),
+
         ).selectExpr(
             "CAST(symbol AS STRING) AS key",
             "to_json(struct(*)) AS value"
@@ -178,6 +153,34 @@ if __name__ == "__main__":
         # window_spec = Window.partitionBy("symbol").orderBy("window.start")
         # sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
         ## 這邊的排序是全局的排序，極度耗費效能，因為要shuffle
+# ---------------------------------------------------------------------------------------------------
+
+        # sma_df = sma_df.withColumn(
+        #     "sma_value",
+        #     SF.when(col('count_of_vwap') != 0,
+        #         SF.round(col('sum_of_vwap') / col('count_of_vwap'), 2)
+        #     ).otherwise(0)
+        # )
+
+        # sma_df = sma_df.select(            
+        #     col("symbol"),
+        #     lit("MA_data").alias("type"),
+        #     lit(f"{window_duration}_MA_data").alias("MA_type"),
+        #     col(f"window.start").alias("start"),
+        #     col(f"window.end").alias("end"),
+
+        #     SF.current_timestamp().alias("current_time"),
+        #     # SF.element_at(col("start_times"), 1).alias("first_data_time"),
+        #     # SF.element_at(col("start_times"), -1).alias("last_data_time"),
+
+        #     # col("sma_value"),
+        #     col("sum_of_vwap"),
+        #     col("count_of_vwap"),
+        #     col("window_data_count"),
+            
+        #     col("real_data_count"),
+        #     col("filled_data_count"),
+        # )
 # ---------------------------------------------------------------------------------------------------
 
     # b_5ma = 100

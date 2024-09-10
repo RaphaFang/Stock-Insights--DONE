@@ -100,7 +100,7 @@ def main():
                 "vwap_price_per_sec",
                 SF.when(
                     col("vwap_price_per_sec") == 0,
-                    SF.coalesce(col("1_prev_vwap"), SF.lit(current_broadcast_value) ,col("yesterday_price"))  # , SF.lit(current_broadcast_value)
+                    SF.coalesce(col("first_prev_vwap"), SF.lit(current_broadcast_value) ,col("yesterday_price"))  # , SF.lit(current_broadcast_value)
                 ).otherwise(col("vwap_price_per_sec"))
             )
             result_df = windowed_df.withColumn(

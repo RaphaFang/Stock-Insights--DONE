@@ -29,7 +29,7 @@ async def create_consumer_by_partition(topic):
         async for message in consumer:
             raw = json.loads(message.value.decode("utf-8"))
             if raw.get("symbol")=="2330":
-                logging.info(f"2330 create_consumer_by_partition: \n{raw}")
+                logging.info(f"{raw}")
                         
     except KeyboardInterrupt:
         logging.info("Consumer stopped by user.")

@@ -28,7 +28,7 @@ create_topic('kafka_MA_data', num_partitions=1)
 # create_topic('kafka_per_sec_data_partition', num_partitions=5)
 
 async def async_main():
-    pool = await build_async_sql_pool()
+    # pool = await build_async_sql_pool()
 
     # 第1站，ws送資料到kafka_raw_data
     heartbeat_task = asyncio.create_task(heartbeat_data_to_batch(msg_queue, stock_to_partition))
@@ -50,14 +50,14 @@ async def async_main():
     # ma_writer_task = asyncio.create_task(queue_to_mysql("MA", MA_queue, pool))
 
     # 測試區
-    consumer_task = asyncio.create_task(create_consumer_by_partition("kafka_per_sec_data"))
+    consumer_task = asyncio.create_task(create_consumer_by_partition("kafka_MA_data"))
 
     try: # , sec_to_sql_task, sec_writer_task, ma_to_sql_task, ma_writer_task
         await asyncio.gather(heartbeat_task, websocket_task, producer_task, consumer_task)
     except Exception as e:
         logging.error(f"Error in main: {e}")
     except KeyboardInterrupt:
-        logging.info("程序被手動中止。")
+        logging.info("STOP by control C.")
 
 
 try:

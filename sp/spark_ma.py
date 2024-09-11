@@ -83,8 +83,8 @@ def main():
             SF.min("first_current_time").alias("first_current_time")
         ).withColumn(
             "merged_sma_value",
-            SF.when(col("merged_count_of_vwap") != 0,
-                    SF.round(col("merged_sum_of_vwap") / col("merged_count_of_vwap"), 2)
+            SF.when(col("m_count_of_vwap") != 0,
+                    SF.round(col("m_sum_of_vwap") / col("m_count_of_vwap"), 2)
             ).otherwise(0)
         )
         # merged_df = merged_df.withColumn("m_current_time", current_timestamp())

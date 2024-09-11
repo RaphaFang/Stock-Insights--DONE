@@ -51,7 +51,7 @@ def main():
 
     # groupBy，spark的groupBy會需要透過Shuffle來處理資料，而Shuffle很消耗 cpu 以及 io，因為他要把資料傳遞到不同的節點，以及全局運算資料
     def calculate_sma(df, window_duration):
-        df_with_watermark = df.withWatermark("start", "15 seconds")
+        df_with_watermark = df.withWatermark("start", "30 seconds")
         sma_df = df_with_watermark.groupBy(
             SF.window(col("start"), f"{window_duration} seconds", "1 second"), col("symbol")
         ).agg(
@@ -164,6 +164,7 @@ def main():
             
     query = kafka_df.writeStream \
         .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
+        .trigger(continuous='10 second')\
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_ma") \
         .start()
         # .outputMode("complete") \

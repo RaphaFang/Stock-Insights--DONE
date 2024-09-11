@@ -155,20 +155,19 @@ def main():
                 .select("data.*")
 
             sma_5 = calculate_sma(df, 5)
+            sma_10 = calculate_sma(df, 10)
             sma_15 = calculate_sma(df, 15)
-            sma_30 = calculate_sma(df, 30)
-            # merged_sma_5 = merge_overlapping_windows(sma_5)
 
             send_to_kafka(sma_5, 5)
+            send_to_kafka(sma_10, 10)
             send_to_kafka(sma_15, 15)
-            send_to_kafka(sma_30, 30)
             
         except Exception as e:
             print(f"Error processing batch {epoch_id}: {e}")
             
     query = kafka_df.writeStream \
         .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
-        .trigger(processingTime='10 second')\
+        .trigger(processingTime='15 second')\
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_ma") \
         .start()
         # .trigger(continuous='1 second')\ # 這要基於mapGroupsWithState，所以我用不了
@@ -177,18 +176,39 @@ def main():
 
 if __name__ == "__main__":
     main()
-            # sma_15 = calculate_sma(df, 15, "sma_15", broadcast_15ma)
-            # sma_30 = calculate_sma(df, 30, "sma_30", broadcast_30ma)
 
-            # merged_sma_5 = merge_overlapping_windows(sma_5)
-
-            # send_to_kafka(sma_15)
-            # send_to_kafka(sma_30)
 
 # 等待整理note ---------------------------------------------------------------------------------------------------
         # window_spec = Window.partitionBy("symbol").orderBy("window.start")
         # sma_df = sma_df.withColumn("rank", SF.row_number().over(window_spec)).orderBy("rank")
         ## 這邊的排序是全局的排序，極度耗費效能，因為要shuffle
+
+# 第二次的嘗試 ---------------------------------------------------------------------------------------------------
+
+        # df.select(            
+        #     col("symbol"),
+        #     lit("MA_data").alias("type"),
+        #     lit(f"{window_duration}_MA_data").alias("MA_type"),
+        #     col("start"),
+        #     col("end"), 
+
+        #     col("first_current_time"),
+        #     SF.current_timestamp().alias("m_current_time"),
+        #     col("merged_sma_value"),
+        #     col("m_sum_of_vwap"),
+        #     col("m_count_of_vwap"),
+        #     col("m_window_data_count"),
+            
+        #     col("m_real_data_count"),
+        #     col("m_filled_data_count"),
+        # ).selectExpr(
+        #     "CAST(symbol AS STRING) AS key",
+        #     "to_json(struct(*)) AS value"
+        # ).write \
+        #     .format("kafka") \
+        #     .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
+        #     .option("topic", "kafka_MA_data") \
+        #     .save()
 # ---------------------------------------------------------------------------------------------------
 
         # sma_df = sma_df.withColumn(

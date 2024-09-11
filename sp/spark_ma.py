@@ -167,9 +167,9 @@ def main():
         .trigger(continuous='1 second')\
         .outputMode("update") \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_ma") \
-        # .start()
+        .start()
         # .trigger(processingTime='20 seconds') \
-    query.awaitTermination()
+    # query.awaitTermination()
 
 if __name__ == "__main__":
     main()

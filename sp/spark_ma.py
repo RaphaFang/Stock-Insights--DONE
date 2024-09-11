@@ -95,8 +95,10 @@ def main():
             col("symbol"),
             lit("MA_data").alias("type"),
             lit(f"{window_duration}_MA_data").alias("MA_type"),
-            col(f"window.start").alias("start"),
-            col(f"window.end").alias("end"),
+            col("start"),  # 使用已经提取的 start 字段
+            col("end"), 
+            # col(f"window.start").alias("start"),
+            # col(f"window.end").alias("end"),
 
             col("first_current_time"),
             SF.current_timestamp().alias("m_current_time"),

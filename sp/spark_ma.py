@@ -69,9 +69,10 @@ def main():
         return sma_df
     
     def merge_overlapping_windows(sma_df):
-        merged_df = sma_df.withWatermark("window.start", "15 seconds").groupBy(
-            col("window.start").alias("start"),
-            col("window.end").alias("end"),
+        expanded_df = sma_df.withColumn("start", col("window.start")).withColumn("end", col("window.end"))
+        merged_df = expanded_df.withWatermark("start", "15 seconds").groupBy(
+            col("start"),
+            col("end"),
             col("symbol")
         ).agg(
             SF.sum("sum_of_vwap").alias("m_sum_of_vwap"),

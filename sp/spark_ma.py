@@ -164,9 +164,9 @@ def main():
             
     query = kafka_df.writeStream \
         .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
-        .outputMode("complete") \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_ma") \
         .start()
+        # .outputMode("complete") \
         # .trigger(continuous='1 second')\ # 這要基於mapGroupsWithState，所以我用不了
         # .trigger(processingTime='once') \ # 這個的等待是資料完全「停了」才會處理運算，但我的資料不可能停
     query.awaitTermination()

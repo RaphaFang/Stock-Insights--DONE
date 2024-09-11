@@ -164,7 +164,7 @@ def main():
             
     query = kafka_df.writeStream \
         .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
-        .trigger(continuous='10 second')\
+        .trigger(processingTime='10 second')\
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_ma") \
         .start()
         # .outputMode("complete") \

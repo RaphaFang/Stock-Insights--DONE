@@ -148,16 +148,20 @@ def main():
         #     .option("topic", "kafka_MA_data") \
         #     .save()
         
-    def process_batch(df, epoch_id, ):
+    def process_batch(df, epoch_id):
         try:
             df = df.selectExpr("CAST(value AS STRING) as json_data") \
                 .select(SF.from_json(col("json_data"), schema).alias("data")) \
                 .select("data.*")
 
             sma_5 = calculate_sma(df, 5)
+            sma_15 = calculate_sma(df, 15)
+            sma_30 = calculate_sma(df, 30)
             # merged_sma_5 = merge_overlapping_windows(sma_5)
 
             send_to_kafka(sma_5, 5)
+            send_to_kafka(sma_15, 15)
+            send_to_kafka(sma_30, 30)
             
         except Exception as e:
             print(f"Error processing batch {epoch_id}: {e}")
@@ -167,7 +171,6 @@ def main():
         .trigger(processingTime='10 second')\
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_ma") \
         .start()
-        # .outputMode("complete") \
         # .trigger(continuous='1 second')\ # 這要基於mapGroupsWithState，所以我用不了
         # .trigger(processingTime='once') \ # 這個的等待是資料完全「停了」才會處理運算，但我的資料不可能停
     query.awaitTermination()

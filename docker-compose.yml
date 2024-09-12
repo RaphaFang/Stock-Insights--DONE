@@ -33,39 +33,39 @@ services:
       SPARK_DRIVER_PORT: 4040
       SPARK_BLOCKMANAGER_PORT: 4041
 
-  spark-driver-ma:
-    image: bitnami/spark:latest
-    volumes:
-      - ./sp:/opt/spark-apps
-      - ./.ivy2:/opt/bitnami/spark/.ivy2
-      - ./checkpoints:/app/tmp/spark_checkpoints
-    working_dir: /opt/spark-apps
-    ports:
-      - "4046-4050:4046-4050"
-    network_mode: host
-    command: >
-      bash -c "
-      pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
-      mkdir -p /opt/bitnami/spark/.ivy2/local &&
-      spark-submit
-      --master local[2]
-      --conf spark.sql.session.timeZone=Asia/Taipei
-      --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
-      --conf spark.ui.enabled=false
-      --conf spark.driver.bindAddress=10.0.1.231
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
-      /opt/spark-apps/spark_ma.py
-      "
-    dns:
-      - 8.8.8.8
-    environment:
-      KAFKA_BROKER: 10.0.1.138:9092
-      SPARK_LOCAL_IP: 10.0.1.231
-      SPARK_PUBLIC_DNS: 10.0.1.231
-      SPARK_DRIVER_BIND_ADDRESS: 10.0.1.231
-      SPARK_DRIVER_HOST: 10.0.1.231
-      SPARK_DRIVER_PORT: 4046
-      SPARK_BLOCKMANAGER_PORT: 4047
+  # spark-driver-ma:
+  #   image: bitnami/spark:latest
+  #   volumes:
+  #     - ./sp:/opt/spark-apps
+  #     - ./.ivy2:/opt/bitnami/spark/.ivy2
+  #     - ./checkpoints:/app/tmp/spark_checkpoints
+  #   working_dir: /opt/spark-apps
+  #   ports:
+  #     - "4046-4050:4046-4050"
+  #   network_mode: host
+  #   command: >
+  #     bash -c "
+  #     pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
+  #     mkdir -p /opt/bitnami/spark/.ivy2/local &&
+  #     spark-submit
+  #     --master local[2]
+  #     --conf spark.sql.session.timeZone=Asia/Taipei
+  #     --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+  #     --conf spark.ui.enabled=false
+  #     --conf spark.driver.bindAddress=10.0.1.231
+  #     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
+  #     /opt/spark-apps/spark_ma.py
+  #     "
+  #   dns:
+  #     - 8.8.8.8
+  #   environment:
+  #     KAFKA_BROKER: 10.0.1.138:9092
+  #     SPARK_LOCAL_IP: 10.0.1.231
+  #     SPARK_PUBLIC_DNS: 10.0.1.231
+  #     SPARK_DRIVER_BIND_ADDRESS: 10.0.1.231
+  #     SPARK_DRIVER_HOST: 10.0.1.231
+  #     SPARK_DRIVER_PORT: 4046
+  #     SPARK_BLOCKMANAGER_PORT: 4047
 # 本地------------------------------------------
 # networks:
 #   kafka-net:

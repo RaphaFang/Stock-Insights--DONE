@@ -58,7 +58,7 @@ def main():
             SF.sum(SF.when(col("size_per_sec") != 0, col("vwap_price_per_sec")).otherwise(0)).alias('sum_of_vwap'),
             SF.count(SF.when(col("size_per_sec") != 0, col("vwap_price_per_sec"))).alias('count_of_vwap'),  # !這邊不應該用otherwise...........
             SF.count("*").alias("window_data_count"),
-            SF.collect_list("start").alias("start_times"),
+            # SF.collect_list("start").alias("start_times"),
             SF.count(SF.when(col("real_or_filled") == "real", col("symbol"))).alias("real_data_count"),
             SF.count(SF.when(col("real_or_filled") != "real", col("symbol"))).alias("filled_data_count"),
         )#.orderBy("window.start") ##這邊的排序會將聚合前，不同節點資料調動，所以理論上會更消耗效能
@@ -75,26 +75,7 @@ def main():
         )
         return sma_df
     
-    # def merge_overlapping_windows(sma_df):
-    #     expanded_df = sma_df.withColumn("start", col("window.start")).withColumn("end", col("window.end"))
-    #     merged_df = expanded_df.withWatermark("start", "15 seconds").groupBy(
-    #         col("start"),
-    #         col("end"),
-    #         col("symbol")
-    #     ).agg(
-    #         SF.sum("sum_of_vwap").alias("m_sum_of_vwap"),
-    #         SF.sum("count_of_vwap").alias("m_count_of_vwap"),
-    #         SF.sum("window_data_count").alias("m_window_data_count"),
-    #         SF.sum("real_data_count").alias("m_real_data_count"),
-    #         SF.sum("filled_data_count").alias("m_filled_data_count"),
-    #         SF.min("first_current_time").alias("first_current_time")
-    #     ).withColumn(
-    #         "merged_sma_value",
-    #         SF.when(col("m_count_of_vwap") != 0,
-    #                 SF.round(col("m_sum_of_vwap") / col("m_count_of_vwap"), 2)
-    #         ).otherwise(0)
-    #     )
-    #     return merged_df
+
 
     def send_to_kafka(df, window_duration):
         df.select(            
@@ -105,10 +86,10 @@ def main():
             col(f"window.end").alias("end"),
 
             SF.current_timestamp().alias("current_time"),
-            SF.element_at(col("start_times"), 1).alias("first_data_time"),
-            SF.element_at(col("start_times"), -1).alias("last_data_time"),
+            # SF.element_at(col("start_times"), 1).alias("first_data_time"),
+            # SF.element_at(col("start_times"), -1).alias("last_data_time"),
 
-            col("sma_value"),
+            col("sma_value"), # 這邊的數值就是不準確，那麼還要特別去運算嗎？
             col("sum_of_vwap"),
             col("count_of_vwap"),
             col("window_data_count"),
@@ -123,31 +104,7 @@ def main():
             .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
             .option("topic", "kafka_MA_data") \
             .save()
-        # df.select(            
-        #     col("symbol"),
-        #     lit("MA_data").alias("type"),
-        #     lit(f"{window_duration}_MA_data").alias("MA_type"),
-        #     col("start"),
-        #     col("end"), 
 
-        #     col("first_current_time"),
-        #     SF.current_timestamp().alias("m_current_time"),
-        #     col("merged_sma_value"),
-        #     col("m_sum_of_vwap"),
-        #     col("m_count_of_vwap"),
-        #     col("m_window_data_count"),
-            
-        #     col("m_real_data_count"),
-        #     col("m_filled_data_count"),
-        # ).selectExpr(
-        #     "CAST(symbol AS STRING) AS key",
-        #     "to_json(struct(*)) AS value"
-        # ).write \
-        #     .format("kafka") \
-        #     .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
-        #     .option("topic", "kafka_MA_data") \
-        #     .save()
-        
     def process_batch(df, epoch_id):
         try:
             df = df.selectExpr("CAST(value AS STRING) as json_data") \
@@ -184,6 +141,51 @@ if __name__ == "__main__":
         ## 這邊的排序是全局的排序，極度耗費效能，因為要shuffle
 
 # 第二次的嘗試 ---------------------------------------------------------------------------------------------------
+    # def merge_overlapping_windows(sma_df):
+    #     expanded_df = sma_df.withColumn("start", col("window.start")).withColumn("end", col("window.end"))
+    #     merged_df = expanded_df.withWatermark("start", "15 seconds").groupBy(
+    #         col("start"),
+    #         col("end"),
+    #         col("symbol")
+    #     ).agg(
+    #         SF.sum("sum_of_vwap").alias("m_sum_of_vwap"),
+    #         SF.sum("count_of_vwap").alias("m_count_of_vwap"),
+    #         SF.sum("window_data_count").alias("m_window_data_count"),
+    #         SF.sum("real_data_count").alias("m_real_data_count"),
+    #         SF.sum("filled_data_count").alias("m_filled_data_count"),
+    #         SF.min("first_current_time").alias("first_current_time")
+    #     ).withColumn(
+    #         "merged_sma_value",
+    #         SF.when(col("m_count_of_vwap") != 0,
+    #                 SF.round(col("m_sum_of_vwap") / col("m_count_of_vwap"), 2)
+    #         ).otherwise(0)
+    #     )
+    #     return merged_df
+        # df.select(            
+        #     col("symbol"),
+        #     lit("MA_data").alias("type"),
+        #     lit(f"{window_duration}_MA_data").alias("MA_type"),
+        #     col("start"),
+        #     col("end"), 
+
+        #     col("first_current_time"),
+        #     SF.current_timestamp().alias("m_current_time"),
+        #     col("merged_sma_value"),
+        #     col("m_sum_of_vwap"),
+        #     col("m_count_of_vwap"),
+        #     col("m_window_data_count"),
+            
+        #     col("m_real_data_count"),
+        #     col("m_filled_data_count"),
+        # ).selectExpr(
+        #     "CAST(symbol AS STRING) AS key",
+        #     "to_json(struct(*)) AS value"
+        # ).write \
+        #     .format("kafka") \
+        #     .option("kafka.bootstrap.servers", "10.0.1.138:9092") \
+        #     .option("topic", "kafka_MA_data") \
+        #     .save()
+        
 
         # df.select(            
         #     col("symbol"),

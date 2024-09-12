@@ -1,6 +1,6 @@
 import json
 import asyncio
-from aiokafka import AIOKafkaConsumer
+from aiokafka import AIOKafkaConsumer, TopicPartition
 from aiokafka.errors import KafkaError
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -9,14 +9,25 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 async def create_consumer(topic):
     while True:
         try:
+            # consumer = AIOKafkaConsumer(
+            #     topic,
+            #     bootstrap_servers='10.0.1.138:9092',
+            #     group_id='testing_group',
+            #     auto_offset_reset='earliest',
+            # )
+            # await consumer.start()
+            # return consumer
+            # # ------------------------------------------
             consumer = AIOKafkaConsumer(
-                topic,
                 bootstrap_servers='10.0.1.138:9092',
                 group_id='testing_group',
                 auto_offset_reset='earliest',
             )
+            partition = TopicPartition(topic, 0)
             await consumer.start()
+            consumer.assign([partition])
             return consumer
+            # # ------------------------------------------
         
         except KafkaError as e:
             logging.info(f"Kafka consumer creation failed: {e}. Retrying in 5 seconds...")
@@ -28,8 +39,9 @@ async def create_consumer_by_partition(topic):
         consumer = await create_consumer(topic)
         async for message in consumer:
             raw = json.loads(message.value.decode("utf-8"))
-            if raw.get("symbol")=="2330":
-                logging.info(f"{raw}")
+            logging.info(raw)
+            # if raw.get("symbol")=="2330":
+            #     logging.info(raw)
                         
     except KeyboardInterrupt:
         logging.info("Consumer stopped by user.")

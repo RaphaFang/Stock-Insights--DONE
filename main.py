@@ -25,7 +25,7 @@ per_sec_queue = asyncio.Queue()
 create_topic('kafka_raw_data', num_partitions=5)
 create_topic('kafka_per_sec_data', num_partitions=1)
 create_topic('kafka_MA_data', num_partitions=1)
-create_topic('kafka_MA_data_aggregated', num_partitions=15)
+create_topic('kafka_MA_data_aggregated', num_partitions=1)
 # kafka_MA_data_aggregated
 # create_topic('kafka_per_sec_data_partition', num_partitions=5)
 

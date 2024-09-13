@@ -114,9 +114,10 @@ def main():
 
     query = kafka_df.writeStream \
         .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id)) \
+        .trigger(processingTime='1 second') \
         .option("checkpointLocation", "/app/tmp/spark_checkpoints/spark_application_first") \
         .start()
-        # .trigger(processingTime='1 second') \ # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了
+    # # 理論上現在不應該用這個，因為這是每秒驅動一次，但如果資料累積，就會沒辦法每秒都運作，並且我已經有window來處理了
     query.awaitTermination()
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ services:
   spark-driver-sec:
     image: bitnami/spark:latest
     volumes:
-      - ./sp:/opt/spark-apps
+      - ./spark_file:/opt/spark-apps
       - ./.ivy2:/opt/bitnami/spark/.ivy2
       - ./checkpoints:/app/tmp/spark_checkpoints
     working_dir: /opt/spark-apps
@@ -20,10 +20,8 @@ services:
       --conf spark.ui.enabled=false
       --conf spark.driver.bindAddress=10.0.1.231
       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
-      /opt/spark-apps/spark_application_first.py
+      /opt/spark-apps/spark_per_sec.py
       "
-    dns:
-      - 8.8.8.8
     environment:
       KAFKA_BROKER: 10.0.1.138:9092
       SPARK_LOCAL_IP: 10.0.1.231
@@ -32,6 +30,8 @@ services:
       SPARK_DRIVER_HOST: 10.0.1.231
       SPARK_DRIVER_PORT: 4040
       SPARK_BLOCKMANAGER_PORT: 4041
+    # dns:
+    #   - 8.8.8.8
 
   # spark-driver-ma:
   #   image: bitnami/spark:latest

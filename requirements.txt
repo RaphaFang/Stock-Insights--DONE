@@ -3,7 +3,6 @@ fugle_marketdata
 confluent-kafka==2.5.0
 requests
 aiohttp
-# pyspark==3.5.0
 schedule
 aiomysql
 aiokafka

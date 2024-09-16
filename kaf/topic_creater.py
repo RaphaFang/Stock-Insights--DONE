@@ -13,11 +13,10 @@ def create_topic(topic_name, num_partitions=1, replication_factor=1, retention_m
     except KafkaException as e:
         print(f"Failed to list/delete '{e}'")
 
-    topic = NewTopic(topic_name, num_partitions=num_partitions, replication_factor=replication_factor, config={'retention.ms': str(retention_ms)})
 
+    topic = NewTopic(topic_name, num_partitions=num_partitions, replication_factor=replication_factor, config={'retention.ms': str(retention_ms)})
     try:
-        fs = admin_client.create_topics([topic])
-        # 下方的好像不必要執行
+        fs = admin_client.create_topics([topic]) # 這邊接出一個fs可以查看建立的狀況，
         for topic, future in fs.items():
             try:
                 future.result()

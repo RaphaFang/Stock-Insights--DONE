@@ -3,8 +3,8 @@ services:
     image: bitnami/spark:latest
     volumes:
       - ./spark_file:/opt/spark-apps
-      - ./.ivy2:/opt/bitnami/spark/.ivy2
-      - ./checkpoints:/app/tmp/spark_checkpoints
+      - ./spark_file/.ivy2:/opt/bitnami/spark/.ivy2
+      - ./spark_file/checkpoints:/app/tmp/spark_checkpoints
     working_dir: /opt/spark-apps
     ports:
       - "4040-4045:4040-4045"
@@ -22,6 +22,7 @@ services:
       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
       /opt/spark-apps/spark_per_sec.py
       "
+    # spark 才能用--packages這方式，flink不行
     environment:
       KAFKA_BROKER: 10.0.1.138:9092
       SPARK_LOCAL_IP: 10.0.1.231
@@ -30,8 +31,31 @@ services:
       SPARK_DRIVER_HOST: 10.0.1.231
       SPARK_DRIVER_PORT: 4040
       SPARK_BLOCKMANAGER_PORT: 4041
-    # dns:
-    #   - 8.8.8.8
+
+  flink-application:
+    image: bitnami/flink:latest
+    volumes:
+      - ./flink_file:/opt/flink-app
+      - ./flink_file/connector:/opt/flink/lib
+      - ./flink_file/checkpoints:/opt/flink-app/checkpoints
+    ports:
+      - "8081:8081"
+    network_mode: host
+    command: >
+      bash -c "
+      /opt/flink/bin/start-cluster.sh &&
+      python /opt/flink-app/flink_ma.py
+      "
+    environment:
+      KAFKA_BROKER: 10.0.1.138:9092
+      TZ: Asia/Taipei
+      state.backend: rocksdb
+      state.checkpoints.dir: file:///opt/flink-app/checkpoints
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4G
 
   # spark-driver-ma:
   #   image: bitnami/spark:latest

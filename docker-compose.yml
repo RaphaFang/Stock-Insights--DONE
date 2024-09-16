@@ -12,7 +12,7 @@ services:
     command: >
       bash -c "
       pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
-      sudo mkdir -p /opt/bitnami/spark/.ivy2/local &&
+      mkdir -p /opt/bitnami/spark/.ivy2/local &&
       spark-submit
       --master local[2]
       --conf spark.sql.session.timeZone=Asia/Taipei

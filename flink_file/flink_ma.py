@@ -95,7 +95,7 @@ def main():
         ).process(SMAProcessWindowFunction(), output_type=Types.STRING())
 
         kafka_producer = FlinkKafkaProducer(
-            topic='kafka_MA_data',
+            topic='kafka_MA_data_aggregated',
             serialization_schema=SimpleStringSchema(),
             producer_config={'bootstrap.servers': '10.0.1.138:9092'}
         )

@@ -4,7 +4,7 @@ services:
     volumes:
       - ./spark_file:/opt/spark-apps
       - ./spark_file/.ivy2:/opt/bitnami/spark/.ivy2
-      - ./spark_file/checkpoints:/app/tmp/spark_checkpoints
+      - ./spark_file/checkpoints/spark_per_sec:/app/tmp/spark_checkpoints/spark_per_sec
     working_dir: /opt/spark-apps
     ports:
       - "4040-4045:4040-4045"

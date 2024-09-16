@@ -35,8 +35,6 @@ services:
     ports:
       - "8001:8001"
     network_mode: host
-    dns:
-      - 8.8.8.8
     environment:
       KAFKA_BROKER: 10.0.1.138:9092
       SPARK_LOCAL_IP: 10.0.1.231
@@ -46,6 +44,8 @@ services:
         limits:
           cpus: "1"
           memory: 3G
+    # dns:
+    #   - 8.8.8.8
 
 volumes:
   kafka_data:

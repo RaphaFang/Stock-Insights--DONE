@@ -11,6 +11,7 @@ services:
     network_mode: host
     command: >
       bash -c "
+      chmod -R 777 /app/tmp/spark_checkpoints &&
       pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
       mkdir -p /opt/bitnami/spark/.ivy2/local &&
       spark-submit

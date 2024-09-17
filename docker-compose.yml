@@ -43,12 +43,14 @@ services:
     network_mode: host
     command: >
       bash -c "
+      pip install --user apache-flink==1.20.0 kafka-python==2.0.2 &&
       /opt/flink/bin/start-cluster.sh &&
-      python /opt/flink-app/flink_ma.py
+      /opt/flink/bin/flink run -py /opt/flink-app/flink_ma.py
       "
     environment:
       KAFKA_BROKER: 10.0.1.138:9092
       TZ: Asia/Taipei
+      taskmanager.numberOfTaskSlots: "2"
       state.backend: rocksdb
       state.checkpoints.dir: file:///opt/flink-app/checkpoints
     deploy:

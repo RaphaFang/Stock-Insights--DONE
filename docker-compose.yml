@@ -1,11 +1,12 @@
 services:
   spark-driver-sec:
-    image: bitnami/spark:3.4.3-debian-12-r13
-    # image: bitnami/spark:latest
+    # image: bitnami/spark:3.4.3-debian-12-r13
+    image: bitnami/spark:latest
     volumes:
       - ./spark_file:/opt/spark-apps
       - ./spark_file/.ivy2:/opt/bitnami/spark/.ivy2
       - ./spark_file/checkpoints/spark_per_sec:/app/tmp/spark_checkpoints/spark_per_sec
+      - ./spark_file/connector:/opt/spark/jars
     working_dir: /opt/spark-apps
     ports:
       - "4040-4045:4040-4045"
@@ -19,8 +20,8 @@ services:
       --conf spark.sql.session.timeZone=Asia/Taipei
       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
       --conf spark.ui.enabled=false
-      --conf spark.driver.bindAddress=0.0.0.0
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
+      --conf spark.driver.bindAddress=10.0.1.231
+      --jars /opt/spark/jars/spark-sql-kafka-0-10_2.12-3.5.2.jar,/opt/spark/jars/kafka-clients-3.8.0.jar
       /opt/spark-apps/spark_per_sec.py
       "
     # spark 才能用--packages這方式，flink不行
@@ -44,10 +45,10 @@ services:
     network_mode: host
     command: >
       bash -c "
-      pip install --user apache-flink==1.20.0 kafka-python==2.0.2 &&
       /opt/flink/bin/start-cluster.sh &&
       /opt/flink/bin/flink run -py /opt/flink-app/flink_ma.py
       "
+    # pip install --user apache-flink==1.20.0 kafka-python==2.0.2 &&
     environment:
       KAFKA_BROKER: 10.0.1.138:9092
       TZ: Asia/Taipei

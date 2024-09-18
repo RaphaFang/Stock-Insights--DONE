@@ -39,9 +39,9 @@ async def create_consumer_by_partition(topic):
         consumer = await create_consumer(topic)
         async for message in consumer:
             raw = json.loads(message.value.decode("utf-8"))
-            # logging.info(raw)
-            if raw.get("symbol")=="2330":
-                logging.info(raw)
+            logging.info(raw)
+            # if raw.get("symbol")=="2330":
+                # logging.info(raw)
             # if raw.get("symbol")=="2330" and raw.get("MA_type")=="5_MA_data":
             #     logging.info(raw)
                         

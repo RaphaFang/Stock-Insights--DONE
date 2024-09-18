@@ -6,7 +6,6 @@ services:
       - ./spark_file:/opt/spark-apps
       - ./spark_file/.ivy2:/opt/bitnami/spark/.ivy2
       - ./spark_file/checkpoints/spark_per_sec:/app/tmp/spark_checkpoints/spark_per_sec
-      # - ./spark_file/connector:/opt/spark/jars
     working_dir: /opt/spark-apps
     ports:
       - "4040-4045:4040-4045"
@@ -56,6 +55,7 @@ services:
       taskmanager.numberOfTaskSlots: "2"
       state.backend: rocksdb
       state.checkpoints.dir: file:///opt/flink-app/checkpoints
+      rest.address: "0.0.0.0"
     deploy:
       resources:
         limits:

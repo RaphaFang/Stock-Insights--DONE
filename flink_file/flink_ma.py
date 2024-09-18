@@ -12,7 +12,6 @@ import json
 def main():
     env = StreamExecutionEnvironment.get_execution_environment()
     env.set_parallelism(2)
-    env.set_stream_time_characteristic(TimeCharacteristic.EventTime)
 
     kafka_consumer = FlinkKafkaConsumer(
         topics='kafka_per_sec_data',
@@ -24,6 +23,8 @@ def main():
     )
 
     data_stream = env.add_source(kafka_consumer)
+    data_stream.print() # 這邊測試一下
+    
 
     def parse_stock_data(value):
         data = json.loads(value)

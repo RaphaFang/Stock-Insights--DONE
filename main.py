@@ -52,7 +52,7 @@ async def async_main():
     # ma_writer_task = asyncio.create_task(queue_to_mysql("MA", MA_queue, pool))
 
     # 測試區
-    consumer_task = asyncio.create_task(create_consumer_by_partition("kafka_per_sec_data"))
+    consumer_task = asyncio.create_task(create_consumer_by_partition("kafka_MA_data_aggregated"))
 
     try: # , sec_to_sql_task, sec_writer_task, ma_to_sql_task, ma_writer_task
         await asyncio.gather(heartbeat_task, websocket_task, producer_task, consumer_task)

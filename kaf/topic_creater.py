@@ -1,5 +1,8 @@
 from confluent_kafka.admin import AdminClient, NewTopic
 from confluent_kafka import KafkaException
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def create_topic(topic_name, num_partitions=1, replication_factor=1, retention_ms=60000):  # 這邊的retention_ms是資料留存時間
     admin_client = AdminClient({'bootstrap.servers': '10.0.1.138:9092'})
@@ -7,11 +10,11 @@ def create_topic(topic_name, num_partitions=1, replication_factor=1, retention_m
     try:
         topic_metadata = admin_client.list_topics(timeout=10).topics
         if topic_name in topic_metadata:
-            print(f"'{topic_name}' already exists. Deleting ---->")
+            logging.info(f"'{topic_name}' already exists. Deleting ---->")
             admin_client.delete_topics([topic_name])
-            print(f"'{topic_name}' deleted. Recreating ---->")
+            logging.info(f"'{topic_name}' deleted. Recreating ---->")
     except KafkaException as e:
-        print(f"Failed to list/delete '{e}'")
+        logging.info(f"Failed to list/delete '{e}'")
 
 
     topic = NewTopic(topic_name, num_partitions=num_partitions, replication_factor=replication_factor, config={'retention.ms': str(retention_ms)})
@@ -20,9 +23,9 @@ def create_topic(topic_name, num_partitions=1, replication_factor=1, retention_m
         for topic, future in fs.items():
             try:
                 future.result()
-                print(f"Topic '{topic}' created successfully. Got {num_partitions} partitions.")
+                logging.info(f"Topic '{topic}' created successfully. Got {num_partitions} partitions.")
             except KafkaException as e:
-                print(f"Failed to create topic '{topic}': {e}")
+                logging.info(f"Failed to create topic '{topic}': {e}")
     except KafkaException as e:
-        print(f"Failed to create topic '{topic_name}': {e}")
+        logging.info(f"Failed to create topic '{topic_name}': {e}")
     #  先前分區一直是[0]的根本原因是因為，沒有先刪除掉，並且kafka的機制是，沒辦法在建立的topic上改動partitioon

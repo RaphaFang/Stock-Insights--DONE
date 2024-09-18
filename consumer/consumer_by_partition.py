@@ -12,23 +12,12 @@ async def create_consumer(topic):
             consumer = AIOKafkaConsumer(
                 topic,
                 bootstrap_servers='10.0.1.138:9092',
-                group_id='testing_group',
+                group_id='new_testing_group',
                 auto_offset_reset='earliest',
             )
             await consumer.start()
             return consumer
-            # # ------------------------------------------
-            # consumer = AIOKafkaConsumer(
-            #     bootstrap_servers='10.0.1.138:9092',
-            #     group_id='testing_group',
-            #     auto_offset_reset='earliest',
-            # )
-            # partition = TopicPartition(topic, 0)
-            # await consumer.start()
-            # consumer.assign([partition])
-            # return consumer
-            # # ------------------------------------------
-        
+
         except KafkaError as e:
             logging.info(f"Kafka consumer creation failed: {e}. Retrying in 5 seconds...")
             await asyncio.sleep(5)
@@ -41,7 +30,7 @@ async def create_consumer_by_partition(topic):
             raw = json.loads(message.value.decode("utf-8"))
             logging.info(raw)
             # if raw.get("symbol")=="2330":
-                # logging.info(raw)
+            #     logging.info(raw)
             # if raw.get("symbol")=="2330" and raw.get("MA_type")=="5_MA_data":
             #     logging.info(raw)
                         

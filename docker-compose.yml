@@ -4,9 +4,9 @@ services:
     image: bitnami/spark:latest
     volumes:
       - ./spark_file:/opt/spark-apps
+      - ./spark_file/connector:/opt/spark/jars
       - ./spark_file/.ivy2:/opt/bitnami/spark/.ivy2
       - ./spark_file/checkpoints/spark_per_sec:/app/tmp/spark_checkpoints/spark_per_sec
-      - ./spark_file/connector:/opt/spark/jars
     working_dir: /opt/spark-apps
     ports:
       - "4040-4045:4040-4045"
@@ -22,6 +22,8 @@ services:
       --conf spark.ui.enabled=false
       --conf spark.driver.bindAddress=10.0.1.231
       --jars /opt/spark/jars/spark-sql-kafka-0-10_2.12-3.5.2.jar,/opt/spark/jars/kafka-clients-3.8.0.jar
+      --jars /opt/bitnami/spark/jars/spark-sql-kafka-0-10_2.12-3.5.2.jar,/opt/bitnami/spark/jars/kafka-clients-3.8.0.jar
+
       /opt/spark-apps/spark_per_sec.py
       "
     # spark 才能用--packages這方式，flink不行

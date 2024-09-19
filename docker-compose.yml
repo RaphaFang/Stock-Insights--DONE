@@ -35,7 +35,9 @@ services:
   #       SPARK_BLOCKMANAGER_PORT: 4041
 
   flink-application:
-    image: flink:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     user: root
     volumes:
       - ./flink_file:/opt/flink-app
@@ -46,10 +48,6 @@ services:
     network_mode: host
     command: >
       bash -c "
-      apt-get update &&
-      apt-get install -y python3.12 python3-pip &&
-      ln -s /usr/bin/python3 /usr/bin/python &&
-      pip3 install apache-flink==1.20.0 kafka-python==2.0.2 &&
       /opt/flink/bin/start-cluster.sh &&
       /opt/flink/bin/flink run -py /opt/flink-app/flink_ma.py
       "
@@ -65,40 +63,72 @@ services:
         limits:
           cpus: "2"
           memory: 4G
-
-  # spark-driver-ma:
-  #   image: bitnami/spark:latest
-  #   volumes:
-  #     - ./sp:/opt/spark-apps
-  #     - ./.ivy2:/opt/bitnami/spark/.ivy2
-  #     - ./checkpoints:/app/tmp/spark_checkpoints
-  #   working_dir: /opt/spark-apps
-  #   ports:
-  #     - "4046-4050:4046-4050"
-  #   network_mode: host
-  #   command: >
-  #     bash -c "
-  #     pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
-  #     mkdir -p /opt/bitnami/spark/.ivy2/local &&
-  #     spark-submit
-  #     --master local[2]
-  #     --conf spark.sql.session.timeZone=Asia/Taipei
-  #     --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
-  #     --conf spark.ui.enabled=false
-  #     --conf spark.driver.bindAddress=10.0.1.231
-  #     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
-  #     /opt/spark-apps/spark_ma.py
-  #     "
-  #   dns:
-  #     - 8.8.8.8
-  #   environment:
-  #     KAFKA_BROKER: 10.0.1.138:9092
-  #     SPARK_LOCAL_IP: 10.0.1.231
-  #     SPARK_PUBLIC_DNS: 10.0.1.231
-  #     SPARK_DRIVER_BIND_ADDRESS: 10.0.1.231
-  #     SPARK_DRIVER_HOST: 10.0.1.231
-  #     SPARK_DRIVER_PORT: 4046
-  #     SPARK_BLOCKMANAGER_PORT: 4047
+# -----------------------
+# flink-application:
+#   image: flink:latest
+#   user: root
+#   volumes:
+#     - ./flink_file:/opt/flink-app
+#     - ./flink_file/connector:/opt/flink/lib
+#     - ./flink_file/checkpoints:/opt/flink-app/checkpoints
+#   ports:
+#     - "8081:8081"
+#   network_mode: host
+#   command: >
+#     bash -c "
+#     apt-get update &&
+#     apt-get install -y python3.12 python3-pip &&
+#     ln -s /usr/bin/python3 /usr/bin/python &&
+#     pip3 install apache-flink==1.20.0 kafka-python==2.0.2 &&
+#     /opt/flink/bin/start-cluster.sh &&
+#     /opt/flink/bin/flink run -py /opt/flink-app/flink_ma.py
+#     "
+#   environment:
+#     KAFKA_BROKER: 10.0.1.138:9092
+#     TZ: Asia/Taipei
+#     taskmanager.numberOfTaskSlots: "2"
+#     state.backend: rocksdb
+#     state.checkpoints.dir: file:///opt/flink-app/checkpoints
+#     rest.address: "0.0.0.0"
+#   deploy:
+#     resources:
+#       limits:
+#         cpus: "2"
+#         memory: 4G
+# -----------------------
+# spark-driver-ma:
+#   image: bitnami/spark:latest
+#   volumes:
+#     - ./sp:/opt/spark-apps
+#     - ./.ivy2:/opt/bitnami/spark/.ivy2
+#     - ./checkpoints:/app/tmp/spark_checkpoints
+#   working_dir: /opt/spark-apps
+#   ports:
+#     - "4046-4050:4046-4050"
+#   network_mode: host
+#   command: >
+#     bash -c "
+#     pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
+#     mkdir -p /opt/bitnami/spark/.ivy2/local &&
+#     spark-submit
+#     --master local[2]
+#     --conf spark.sql.session.timeZone=Asia/Taipei
+#     --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+#     --conf spark.ui.enabled=false
+#     --conf spark.driver.bindAddress=10.0.1.231
+#     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
+#     /opt/spark-apps/spark_ma.py
+#     "
+#   dns:
+#     - 8.8.8.8
+#   environment:
+#     KAFKA_BROKER: 10.0.1.138:9092
+#     SPARK_LOCAL_IP: 10.0.1.231
+#     SPARK_PUBLIC_DNS: 10.0.1.231
+#     SPARK_DRIVER_BIND_ADDRESS: 10.0.1.231
+#     SPARK_DRIVER_HOST: 10.0.1.231
+#     SPARK_DRIVER_PORT: 4046
+#     SPARK_BLOCKMANAGER_PORT: 4047
 # 本地------------------------------------------
 # networks:
 #   kafka-net:

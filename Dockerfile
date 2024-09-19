@@ -1,13 +1,16 @@
-FROM python:3.11-slim AS builder
-
-RUN pip install --upgrade pip && \
-    pip install apache-flink
-
 FROM bitnami/flink:latest
 
 USER root
 
-COPY --from=builder /usr/local /usr/local
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip openjdk-11-jdk && \
+    ln -s /usr/bin/python3 /usr/bin/python
+
+ENV JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+RUN python -m pip install --upgrade pip && \
+    python -m pip install --break-system-packages apache-flink
 
 WORKDIR /opt/flink-app
 

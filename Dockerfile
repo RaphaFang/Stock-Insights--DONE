@@ -5,7 +5,8 @@ USER root
 RUN apt-get update && \
     apt-get install -y python3 python3-pip && \
     ln -s /usr/bin/python3 /usr/bin/python && \
-    pip install --break-system-packages pyflink
+    /usr/bin/python3 -m pip install --break-system-packages pyflink
+
 ENV PATH="/usr/local/bin:${PATH}"
 
 WORKDIR /opt/flink-app

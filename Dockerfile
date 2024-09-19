@@ -3,10 +3,10 @@ FROM bitnami/flink:latest
 USER root
 
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip openjdk-11-jdk && \
+    apt-get install -y python3 python3-pip && \
     ln -s /usr/bin/python3 /usr/bin/python
 
-ENV JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
+ENV JAVA_HOME="/opt/bitnami/java"
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
 RUN python -m pip install --upgrade pip && \
@@ -15,6 +15,7 @@ RUN python -m pip install --upgrade pip && \
 WORKDIR /opt/flink-app
 
 CMD ["/opt/bitnami/scripts/flink/run.sh"]
+
 
 
 

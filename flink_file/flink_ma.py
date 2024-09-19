@@ -1,11 +1,10 @@
-from pyflink.datastream import StreamExecutionEnvironment, TimeCharacteristic
-from pyflink.datastream.functions import KeyedProcessFunction, RuntimeContext, ProcessWindowFunction
+from pyflink.datastream import StreamExecutionEnvironment
+from pyflink.datastream.functions import ProcessWindowFunction
 from pyflink.common.typeinfo import Types
 from pyflink.common.serialization import SimpleStringSchema
-from pyflink.datastream.connectors.kafka import FlinkKafkaConsumer, FlinkKafkaProducer
-from pyflink.common.watermark_strategy import WatermarkStrategy, TimestampAssigner
+from pyflink.datastream.connectors.kafka import KafkaSource, KafkaSink, KafkaRecordSerializationSchema
+from pyflink.common.watermark_strategy import WatermarkStrategy
 from pyflink.datastream.window import SlidingEventTimeWindows
-from pyflink.common import Row
 from datetime import datetime, timedelta
 import json
 
@@ -13,31 +12,28 @@ def main():
     env = StreamExecutionEnvironment.get_execution_environment()
     env.set_parallelism(2)
 
-    kafka_consumer = FlinkKafkaConsumer(
-        topics='kafka_per_sec_data',
-        deserialization_schema=SimpleStringSchema(),
-        properties={
-            'bootstrap.servers': '10.0.1.138:9092',
-            'group.id': 'new_flink_group'
-        }
+    kafka_source = KafkaSource.builder() \
+        .set_bootstrap_servers('10.0.1.138:9092') \
+        .set_topics('kafka_per_sec_data') \
+        .set_group_id('new_flink_group') \
+        .set_value_only_deserializer(SimpleStringSchema()) \
+        .build()
+
+    data_stream = env.from_source(
+        source=kafka_source,
+        watermark_strategy=WatermarkStrategy.for_bounded_out_of_orderness(timedelta(seconds=30)),
+        source_name="Kafka Source"
     )
 
-    data_stream = env.add_source(kafka_consumer)
-    data_stream.print() # 這邊測試一下
-    
+    data_stream.print()
 
     def parse_stock_data(value):
         data = json.loads(value)
         event_time = datetime.fromisoformat(data['current_time']).timestamp() * 1000
         return data, event_time
 
-    watermark_strategy = WatermarkStrategy \
-        .for_bounded_out_of_orderness(timedelta(seconds=30)) \
-        .with_timestamp_assigner(lambda element, timestamp: element[1])
-
     parsed_stream = data_stream \
-        .map(parse_stock_data, output_type=Types.TUPLE([Types.MAP(Types.STRING(), Types.STRING()), Types.LONG()])) \
-        .assign_timestamps_and_watermarks(watermark_strategy)
+        .map(parse_stock_data, output_type=Types.TUPLE([Types.MAP(Types.STRING(), Types.STRING()), Types.LONG()]))
 
     class SMAProcessWindowFunction(ProcessWindowFunction):
 
@@ -95,13 +91,15 @@ def main():
             )
         ).process(SMAProcessWindowFunction(), output_type=Types.STRING())
 
-        kafka_producer = FlinkKafkaProducer(
-            topic='kafka_MA_data_aggregated',
-            serialization_schema=SimpleStringSchema(),
-            producer_config={'bootstrap.servers': '10.0.1.138:9092'}
-        )
+        kafka_sink = KafkaSink.builder() \
+            .set_bootstrap_servers('10.0.1.138:9092') \
+            .set_record_serializer(KafkaRecordSerializationSchema.builder()
+                                   .set_topic('kafka_MA_data_aggregated')
+                                   .set_value_serialization_schema(SimpleStringSchema())
+                                   .build()) \
+            .build()
 
-        windowed_stream.add_sink(kafka_producer)
+        windowed_stream.sink_to(kafka_sink)
 
     env.execute("Flink MA Data Stream Processing")
 

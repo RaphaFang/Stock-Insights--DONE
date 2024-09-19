@@ -7,8 +7,7 @@ RUN apt-get update && \
     ln -s /usr/bin/python3 /usr/bin/python && \
     /usr/bin/python3 -m pip install --break-system-packages pyflink
 
-ENV PYTHONPATH="/usr/local/lib/python3.11/dist-packages"
-ENV PATH="/usr/local/bin:${PATH}"
+ENV PYTHONPATH="/usr/local/lib/python3.11/dist-packages:${PYTHONPATH}"
 
 WORKDIR /opt/flink-app
 

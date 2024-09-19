@@ -41,7 +41,7 @@ services:
     user: root
     volumes:
       - ./flink_file:/opt/flink-app
-      - ./flink_file/connector:/opt/flink/lib
+      - ./flink_file/plugins:/opt/flink/plugins
       - ./flink_file/checkpoints:/opt/flink-app/checkpoints
       - ./flink_file/log:/opt/bitnami/flink/log
     ports:

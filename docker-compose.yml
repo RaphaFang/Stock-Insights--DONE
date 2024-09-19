@@ -1,41 +1,42 @@
 services:
-  spark-driver-sec:
-    # image: bitnami/spark:3.4.3-debian-12-r13
-    image: bitnami/spark:latest
-    volumes:
-      - ./spark_file:/opt/spark-apps
-      - ./spark_file/.ivy2:/opt/bitnami/spark/.ivy2
-      - ./spark_file/checkpoints/spark_per_sec:/app/tmp/spark_checkpoints/spark_per_sec
-    working_dir: /opt/spark-apps
-    ports:
-      - "4040-4045:4040-4045"
-    network_mode: host
-    command: >
-      bash -c "
-      pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
-      mkdir -p /opt/bitnami/spark/.ivy2/local &&
-      spark-submit
-      --master local[2]
-      --conf spark.sql.session.timeZone=Asia/Taipei
-      --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
-      --conf spark.ui.enabled=false
-      --conf spark.driver.bindAddress=10.0.1.231
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
-      /opt/spark-apps/spark_per_sec.py
-      "
-    # --jars /opt/spark/jars/spark-sql-kafka-0-10_2.12-3.5.2.jar,/opt/spark/jars/kafka-clients-3.8.0.jar
-    # spark 才能用--packages這方式，flink不行
-    environment:
-      KAFKA_BROKER: 10.0.1.138:9092
-      SPARK_LOCAL_IP: 10.0.1.231
-      SPARK_PUBLIC_DNS: 10.0.1.231
-      SPARK_DRIVER_BIND_ADDRESS: 10.0.1.231
-      SPARK_DRIVER_HOST: 10.0.1.231
-      SPARK_DRIVER_PORT: 4040
-      SPARK_BLOCKMANAGER_PORT: 4041
+  #   spark-driver-sec:
+  #     # image: bitnami/spark:3.4.3-debian-12-r13
+  #     image: bitnami/spark:latest
+  #     volumes:
+  #       - ./spark_file:/opt/spark-apps
+  #       - ./spark_file/.ivy2:/opt/bitnami/spark/.ivy2
+  #       - ./spark_file/checkpoints/spark_per_sec:/app/tmp/spark_checkpoints/spark_per_sec
+  #     working_dir: /opt/spark-apps
+  #     ports:
+  #       - "4040-4045:4040-4045"
+  #     network_mode: host
+  #     command: >
+  #       bash -c "
+  #       pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
+  #       mkdir -p /opt/bitnami/spark/.ivy2/local &&
+  #       spark-submit
+  #       --master local[2]
+  #       --conf spark.sql.session.timeZone=Asia/Taipei
+  #       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+  #       --conf spark.ui.enabled=false
+  #       --conf spark.driver.bindAddress=10.0.1.231
+  #       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
+  #       /opt/spark-apps/spark_per_sec.py
+  #       "
+  #     # --jars /opt/spark/jars/spark-sql-kafka-0-10_2.12-3.5.2.jar,/opt/spark/jars/kafka-clients-3.8.0.jar
+  #     # spark 才能用--packages這方式，flink不行
+  #     environment:
+  #       KAFKA_BROKER: 10.0.1.138:9092
+  #       SPARK_LOCAL_IP: 10.0.1.231
+  #       SPARK_PUBLIC_DNS: 10.0.1.231
+  #       SPARK_DRIVER_BIND_ADDRESS: 10.0.1.231
+  #       SPARK_DRIVER_HOST: 10.0.1.231
+  #       SPARK_DRIVER_PORT: 4040
+  #       SPARK_BLOCKMANAGER_PORT: 4041
 
   flink-application:
     image: flink:latest
+    user: root
     volumes:
       - ./flink_file:/opt/flink-app
       - ./flink_file/connector:/opt/flink/lib

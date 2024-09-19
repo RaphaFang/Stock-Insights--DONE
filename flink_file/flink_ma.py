@@ -18,7 +18,7 @@ def main():
         deserialization_schema=SimpleStringSchema(),
         properties={
             'bootstrap.servers': '10.0.1.138:9092',
-            'group.id': 'flink_group'
+            'group.id': 'new_flink_group'
         }
     )
 

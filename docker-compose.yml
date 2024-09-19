@@ -50,7 +50,7 @@ services:
     command: >
       bash -c "
       /opt/bitnami/flink/bin/start-cluster.sh &&
-      /opt/bitnami/flink/bin/flink run -py /opt/flink-app/flink_ma.py
+      /usr/bin/python3 /opt/flink-app/flink_ma.py
       "
     environment:
       KAFKA_BROKER: 10.0.1.138:9092

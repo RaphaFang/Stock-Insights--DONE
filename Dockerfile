@@ -8,4 +8,4 @@ RUN apt-get update && \
 
 WORKDIR /opt/flink-app
 
-CMD ["/opt/flink/bin/start-cluster.sh"]
+CMD ["/opt/bitnami/scripts/flink/run.sh"]

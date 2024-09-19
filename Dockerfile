@@ -9,8 +9,10 @@ RUN apt-get update && \
 ENV JAVA_HOME="/opt/bitnami/java"
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+
 RUN python -m pip install --upgrade pip && \
-    python -m pip install --break-system-packages apache-flink
+    python -m pip install apache-flink
 
 WORKDIR /opt/flink-app
 

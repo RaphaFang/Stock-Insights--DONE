@@ -2,10 +2,10 @@ FROM bitnami/flink:latest
 
 USER root
 
-RUN apt-get update && apt-get install -y python3 python3-pip && \
-    ln -s /usr/bin/python3 /usr/bin/python
-
-RUN pip install pyflink
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
+    pip install --break-system-packages pyflink
 
 WORKDIR /opt/flink-app
 

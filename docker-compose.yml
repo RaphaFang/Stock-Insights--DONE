@@ -43,6 +43,7 @@ services:
       - ./flink_file:/opt/flink-app
       - ./flink_file/connector:/opt/flink/lib
       - ./flink_file/checkpoints:/opt/flink-app/checkpoints
+      - ./flink_file/log:/opt/bitnami/flink/log
     ports:
       - "8081:8081"
     network_mode: host
@@ -58,6 +59,7 @@ services:
       state.backend: rocksdb
       state.checkpoints.dir: file:///opt/flink-app/checkpoints
       rest.address: "0.0.0.0"
+
     deploy:
       resources:
         limits:

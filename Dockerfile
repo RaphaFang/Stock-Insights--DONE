@@ -6,8 +6,8 @@ RUN apt-get update && \
     apt-get install -y python3 python3-pip && \
     ln -s /usr/bin/python3 /usr/bin/python
 
-RUN mkdir -p /opt/bitnami/flink/log && \
-    chmod 777 /opt/bitnami/flink/log
+# RUN mkdir -p /opt/bitnami/flink/log && \
+#     chmod 777 /opt/bitnami/flink/log
 
 WORKDIR /opt/flink-app
 

@@ -1,0 +1,181 @@
+services:
+  spark-driver-sec:
+    image: bitnami/spark:3.4.3-debian-12-r13
+    # image: bitnami/spark:latest
+    volumes:
+      - ./spark_file:/opt/spark-apps
+      - ./spark_file/.ivy2:/opt/bitnami/spark/.ivy2
+      - ./spark_file/checkpoints/spark_per_sec:/app/tmp/spark_checkpoints/spark_per_sec
+    working_dir: /opt/spark-apps
+    ports:
+      - "4040-4045:4040-4045"
+    network_mode: host
+    command: >
+      bash -c "
+      pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
+      mkdir -p /opt/bitnami/spark/.ivy2/local &&
+      spark-submit
+      --master local[2]
+      --conf spark.sql.session.timeZone=Asia/Taipei
+      --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+      --conf spark.ui.enabled=false
+      --conf spark.driver.bindAddress=10.0.1.231
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
+      /opt/spark-apps/spark_per_sec.py
+      "
+    # --jars /opt/spark/jars/spark-sql-kafka-0-10_2.12-3.5.2.jar,/opt/spark/jars/kafka-clients-3.8.0.jar
+    # spark 才能用--packages這方式，flink不行
+    environment:
+      KAFKA_BROKER: 10.0.1.138:9092
+      SPARK_LOCAL_IP: 10.0.1.231
+      SPARK_PUBLIC_DNS: 10.0.1.231
+      SPARK_DRIVER_BIND_ADDRESS: 10.0.1.231
+      SPARK_DRIVER_HOST: 10.0.1.231
+      SPARK_DRIVER_PORT: 4040
+      SPARK_BLOCKMANAGER_PORT: 4041
+
+spark-driver-ma:
+  image: bitnami/spark:3.4.3-debian-12-r13
+  # image: bitnami/spark:latest
+  volumes:
+    - ./sp:/opt/spark-apps
+    - ./.ivy2:/opt/bitnami/spark/.ivy2
+    - ./checkpoints:/app/tmp/spark_checkpoints
+  working_dir: /opt/spark-apps
+  ports:
+    - "4046-4050:4046-4050"
+  network_mode: host
+  command: >
+    bash -c "
+    pip install --user pyspark==3.5.2 kafka-python==2.0.2 six &&
+    mkdir -p /opt/bitnami/spark/.ivy2/local &&
+    spark-submit
+    --master local[2]
+    --conf spark.sql.session.timeZone=Asia/Taipei
+    --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+    --conf spark.ui.enabled=false
+    --conf spark.driver.bindAddress=10.0.1.231
+    --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.2,org.apache.kafka:kafka-clients:3.8.0
+    /opt/spark-apps/spark_ma.py
+    "
+  dns:
+    - 8.8.8.8
+  environment:
+    KAFKA_BROKER: 10.0.1.138:9092
+    SPARK_LOCAL_IP: 10.0.1.231
+    SPARK_PUBLIC_DNS: 10.0.1.231
+    SPARK_DRIVER_BIND_ADDRESS: 10.0.1.231
+    SPARK_DRIVER_HOST: 10.0.1.231
+    SPARK_DRIVER_PORT: 4046
+    SPARK_BLOCKMANAGER_PORT: 4047
+# -----------------------
+# flink-application:
+#   build:
+#     context: .
+#     dockerfile: Dockerfile
+#   user: root
+#   volumes:
+#     - ./flink_file:/opt/flink-app
+#     - ./flink_file/plugins:/opt/flink/plugins
+#     - ./flink_file/checkpoints:/opt/flink-app/checkpoints
+#     - ./flink_file/log:/opt/bitnami/flink/log
+#   ports:
+#     - "8081:8081"
+#   network_mode: host
+#   command: >
+#     bash -c "
+#     /opt/bitnami/flink/bin/start-cluster.sh &&
+#     /usr/bin/python3 /opt/flink-app/flink_ma.py
+#     "
+#   environment:
+#     TZ: Asia/Taipei
+#     KAFKA_BROKER: 10.0.1.138:9092
+#     FLINK_PROPERTIES: |
+#       taskmanager.numberOfTaskSlots: 2
+#       state.backend: rocksdb
+#       state.checkpoints.dir: file:///opt/flink-app/checkpoints
+#       rest.address: 0.0.0.0
+#       pipeline.jars: file:///opt/flink/plugins/flink-connector-kafka-3.2.0-1.19.jar
+#   deploy:
+#     resources:
+#       limits:
+#         cpus: "2"
+#         memory: 4G
+
+# local------------------------------------------
+# networks:
+#   kafka-net:
+#     name: kafka_stack_kafka-net
+#     external: true
+# swarm -----------------------------------------------------------------------------
+# services:
+#   spark-driver-sec:
+#     image: bitnami/spark:latest
+#     deploy:
+#       placement:
+#         constraints:
+#           - "node.hostname == ip-10-0-1-231"
+#     volumes:
+#       - ./sp:/opt/spark-apps
+#       - ./.ivy2:/opt/bitnami/spark/.ivy2
+#       - ./checkpoints:/app/tmp/spark_checkpoints
+#     working_dir: /opt/spark-apps
+#     ports:
+#       - "4040-4045:4040-4045"
+#     command: >
+#       bash -c "
+#       pip install --user kafka-python==2.0.2 six &&
+#       mkdir -p /opt/bitnami/spark/.ivy2/local &&
+#       spark-submit
+#       --master local[2]
+#       --conf spark.sql.session.timeZone=Asia/Taipei
+#       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+#       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
+#       /opt/spark-apps/spark_application_first.py
+#       "
+#     dns:
+#       - 8.8.8.8
+#     environment:
+#       KAFKA_BROKER: kafka:9092
+#     networks:
+#       - kafka-net
+
+#   spark-driver-ma:
+#     image: bitnami/spark:latest
+#     deploy:
+#       placement:
+#         constraints:
+#           - "node.hostname == ip-10-0-1-231"
+#     volumes:
+#       - ./sp:/opt/spark-apps
+#       - ./.ivy2:/opt/bitnami/spark/.ivy2
+#       - ./checkpoints:/app/tmp/spark_checkpoints
+#     working_dir: /opt/spark-apps
+#     ports:
+#       - "4046-4050:4046-4050"
+#     command: >
+#       bash -c "
+#       pip install --user kafka-python==2.0.2 six &&
+#       mkdir -p /opt/bitnami/spark/.ivy2/local &&
+#       spark-submit
+#       --master local[2]
+#       --conf spark.sql.session.timeZone=Asia/Taipei
+#       --conf spark.jars.ivy=/opt/bitnami/spark/.ivy2
+#       --conf spark.driver.bindAddress=10.0.1.231
+#       --conf spark.driver.host=10.0.1.231
+#       --conf spark.driver.port=4046
+#       --conf spark.blockManager.port=4047
+#       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2,org.apache.kafka:kafka-clients:3.8.0
+#       /opt/spark-apps/spark_ma.py
+#       "
+#     dns:
+#       - 8.8.8.8
+#     environment:
+#       KAFKA_BROKER: kafka:9092
+#     networks:
+#       - kafka-net
+
+# networks:
+#   kafka-net:
+#     name: kafka_stack_kafka-net
+#     external: true

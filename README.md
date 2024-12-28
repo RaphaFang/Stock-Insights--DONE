@@ -9,7 +9,7 @@ The project is deployed across three separate AWS EC2 instances, demonstrating t
 
 ## 🎥 Demo
 
-![the gif demo for Stock-Insights project](https://drive.google.com/file/d/1tM5LCNbDgtzcPm2iVkgzaZN7LiovhkX9)
+![the gif demo for Stock-Insights project](https://github.com/user-attachments/assets/28e1eb1c-4ddb-43ae-b193-40332d1b9790)
 
 ## 🛠️ System Architecture Diagram
 

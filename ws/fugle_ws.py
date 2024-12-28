@@ -76,22 +76,3 @@ class AsyncWSHandler:
             await self.websocket.close()
             await self.websocket.wait_closed()
             logging.info("Disconnected from WebSocket.")
-
-# -----------------------------------------------------------------------------------------------
-# async def main():
-#     ws_handler = WebSocketHandler(handle_data_callback=lambda x: print(f"Received data: {x}"))
-#     await ws_handler.connect()
-
-# asyncio.run(main())
-
-# 資訊先從connect進來
-# 接下來到handle_message()
-# 接下來到handle_message()裡面的 self.handle_data_callback
-# handle_data_callback這邊在連接到下一站的資料除理機制
-
-
-# connect(): Asynchronously opens a WebSocket connection.
-# recv(): Asynchronously receives messages from the WebSocket.
-# send(): Asynchronously sends messages to the WebSocket.
-# close(): Asynchronously closes the WebSocket connection with a proper closing handshake.
-# wait_closed(): Awaits the complete termination of the connection after closing.

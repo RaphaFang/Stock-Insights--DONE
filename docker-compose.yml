@@ -29,7 +29,9 @@ services:
       - kafka_data:/bitnami/kafka
 
   kafka-app:
-    image: raphafang/kafka-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     env_file:
       - .env
     ports:
@@ -44,13 +46,11 @@ services:
         limits:
           cpus: "1"
           memory: 3G
-    # dns:
-    #   - 8.8.8.8
 
 volumes:
   kafka_data:
     driver: local
-### 可以運作的swarm版本 ------------------------------------------
+# ## 可以運作的swarm版本 ------------------------------------------
 # services:
 #   kafka:
 #     image: "bitnami/kafka:latest"
@@ -119,11 +119,3 @@ volumes:
 # volumes:
 #   kafka_data:
 #     driver: local
-### 捨棄------------------------------------------
-# networks:
-#   kafka-net:
-#     driver: overlay
-#     attachable: true
-#   aws-net:
-#     external: true
-#     # name: vpc-0732371fa974ce172 # 這根本用不了

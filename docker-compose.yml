@@ -1,0 +1,40 @@
+services:
+  fastapi-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    network_mode: host
+    dns:
+      - 8.8.8.8
+    environment:
+      KAFKA_BROKER: 10.0.1.138:9092
+      SPARK_LOCAL_IP: 10.0.1.231
+      SPARK_PUBLIC_DNS: 10.0.1.231
+# 可以運作的swarm版本 ------------------------------------------
+# services:
+#   fastapi-app:
+#     image: raphafang/fastapi-app:latest
+#     deploy:
+#       placement:
+#         constraints:
+#           - "node.hostname == ip-10-0-1-114"
+#     ports:
+#       - "8000:8000"
+#     dns:
+#       - 8.8.8.8
+#     environment:
+#       KAFKA_BROKER: kafka:9092
+#     networks:
+#       - kafka-net
+#       - aws-net
+#     volumes:
+#       - /home/ubuntu/WH/tdt/secrets:/app/secrets
+
+# networks:
+#   kafka-net:
+#     name: kafka_stack_kafka-net
+#     external: true
+#   aws-net:
+#     external: true

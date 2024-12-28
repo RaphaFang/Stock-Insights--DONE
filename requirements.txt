@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-jose==3.3.0
+authlib
+starlette
+itsdangerous
+asyncio
+websockets
+aiokafka

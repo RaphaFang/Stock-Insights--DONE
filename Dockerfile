@@ -19,4 +19,4 @@ WORKDIR /opt/flink-app
 CMD ["/opt/bitnami/scripts/flink/run.sh"]
 
 # -----------------------
-# optimize, set 1 RUN for slim the docker
+# optimize, set 1 RUN for slimming the docker

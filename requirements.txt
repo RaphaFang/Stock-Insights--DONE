@@ -7,9 +7,3 @@ itsdangerous
 asyncio
 websockets
 aiokafka
-
-# kafka-python
-# pydantic[email]
-# aiohttp
-# redis
-# aiomysql

@@ -1,274 +1,111 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const symbols = ["2330", "0050", "00670L", "2454", "6115"];
-  const charts = {}; // 存储每个symbol对应的图表实例
+  const stocks = {};
 
-  symbols.forEach((symbol) => {
-    const labels = [];
-    const vwapPriceData = [];
-    const sma5Data = [];
-    const sizePerSecData = [];
-    const pricePercentageChange = [];
-    const priceColors = [];
+  const socket = new WebSocket("wss://raphaelfang.com/stock/v1/ws/data");
 
-    const priceCtx = document.getElementById(`priceChart_${symbol}`).getContext("2d");
-    const priceChart = new Chart(priceCtx, {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: "VWAP Price per Second",
-            data: vwapPriceData,
-            borderColor: "rgba(255, 99, 132, 1)",
-            borderWidth: 2,
-            fill: false,
-            spanGaps: true,
-            yAxisID: "y1",
-          },
-          {
-            label: "5 Period SMA",
-            data: sma5Data,
-            borderColor: "rgba(75, 192, 192, 1)",
-            borderWidth: 2,
-            fill: false,
-            spanGaps: true,
-            yAxisID: "y1",
-          },
-          {
-            label: "Price Change (%)",
-            data: pricePercentageChange,
-            borderColor: function (context) {
-              const index = context.dataIndex;
-              return priceColors[index];
-            },
-            borderWidth: 2,
-            fill: false,
-            yAxisID: "y2",
-          },
-        ],
-      },
-      options: {
-        scales: {
-          y1: {
-            type: "linear",
-            position: "left",
-            title: {
-              display: true,
-              text: "Price",
-            },
-            grid: {
-              display: false, // Remove horizontal grid lines
-            },
-            ticks: {
-              callback: function (value) {
-                return value.toFixed(2);
-              },
-            },
-          },
-          y2: {
-            type: "linear",
-            position: "right",
-            title: {
-              display: true,
-              text: "Percentage Change (%)",
-            },
-            grid: {
-              display: false, // Remove vertical grid lines
-            },
-            ticks: {
-              min: -10,
-              max: 10,
-              callback: function (value) {
-                return value + "%";
-              },
-            },
-          },
-          x: {
-            type: "time",
-            time: {
-              unit: "second",
-              displayFormats: {
-                second: "h:mm:ss a",
-              },
-            },
-            title: {
-              display: true,
-              text: "Time",
-            },
-            grid: {
-              display: false, // Remove vertical grid lines
-            },
-          },
-        },
-        plugins: {
-          zoom: {
-            pan: {
-              enabled: true,
-              mode: "x",
-            },
-            wheel: {
-              enabled: true,
-              mode: "x",
-            },
-            drag: {
-              enabled: true,
-              mode: "x",
-            },
-            pinch: {
-              enabled: true,
-              mode: "x",
-            },
-          },
-        },
-      },
-    });
+  socket.onmessage = function (event) {
+    const data = JSON.parse(event.data);
+    const symbol = data.symbol;
 
-    const sizeCtx = document.getElementById(`sizeChart_${symbol}`).getContext("2d");
-    const sizeChart = new Chart(sizeCtx, {
-      type: "bar",
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: "Size per Second",
-            data: sizePerSecData,
-            backgroundColor: "rgba(54, 162, 235, 0.5)",
-          },
-        ],
-      },
-      options: {
-        scales: {
-          y: {
-            type: "linear",
-            position: "left",
-            title: {
-              display: true,
-              text: "Size",
-            },
-            grid: {
-              display: false, // Remove horizontal grid lines
-            },
-          },
-          x: {
-            type: "time",
-            time: {
-              unit: "second",
-              displayFormats: {
-                second: "h:mm:ss a",
-              },
-            },
-            title: {
-              display: true,
-              text: "Time",
-            },
-            grid: {
-              display: false, // Remove vertical grid lines
-            },
-          },
-        },
-        plugins: {
-          zoom: {
-            pan: {
-              enabled: true,
-              mode: "x",
-            },
-            wheel: {
-              enabled: true,
-              mode: "x",
-            },
-            drag: {
-              enabled: true,
-              mode: "x",
-            },
-            pinch: {
-              enabled: true,
-              mode: "x",
-            },
-          },
-        },
-      },
-    });
-
-    charts[symbol] = {
-      priceChart,
-      sizeChart,
-      labels,
-      vwapPriceData,
-      sma5Data,
-      sizePerSecData,
-      pricePercentageChange,
-      priceColors,
-    };
-  });
-
-  // WebSocket连接
-  const ws = new WebSocket("wss://raphaelfang.com/stock/v1/ws/data");
-
-  ws.onopen = function () {
-    console.log("WebSocket connection opened");
-  };
-
-  ws.onmessage = function (event) {
-    const incomingData = JSON.parse(event.data);
-    console.log("Received Data:", incomingData); // 调试信息，确认收到的数据
-
-    const symbol = incomingData.symbol;
-
-    if (!charts[symbol]) {
-      console.error(`No chart found for symbol: ${symbol}`);
-      return;
-    }
-
-    const chartData = charts[symbol];
-
-    // If `yesterday_price` is available, set the middle of the y-axis
-    if (incomingData.yesterday_price) {
-      const yesterdayPrice = incomingData.yesterday_price;
-      chartData.priceChart.options.scales.y1.min = yesterdayPrice - yesterdayPrice * 0.1;
-      chartData.priceChart.options.scales.y1.max = yesterdayPrice + yesterdayPrice * 0.1;
-      chartData.priceChart.options.scales.y1.ticks = {
-        stepSize: yesterdayPrice * 0.02,
+    if (!stocks[symbol]) {
+      stocks[symbol] = {
+        perSecData: [],
+        maData: [],
+        priceChart: null,
+        volumeChart: null,
       };
+
+      createCharts(symbol);
     }
 
-    const timeLabel = new Date(incomingData.start).toLocaleTimeString("en-US", { hour12: true });
-    console.log("Time Label:", timeLabel); // 调试信息，确认时间标签
-
-    if (chartData.labels.length > 50) {
-      chartData.labels.shift();
-      chartData.vwapPriceData.shift();
-      chartData.sizePerSecData.shift();
-      chartData.sma5Data.shift();
-      chartData.pricePercentageChange.shift();
-      chartData.priceColors.shift();
+    if (data.type === "per_sec_data") {
+      stocks[symbol].perSecData.push(data);
+    } else if (data.type === "MA_data") {
+      stocks[symbol].maData.push(data);
     }
 
-    chartData.labels.push(timeLabel);
+    updateCharts(symbol);
+  };
 
-    if (incomingData.type === "per_sec_data") {
-      chartData.vwapPriceData.push(incomingData.vwap_price_per_sec);
-      chartData.pricePercentageChange.push(incomingData.price_change_percentage);
-      chartData.sizePerSecData.push(incomingData.size_per_sec);
+  function createCharts(symbol) {
+    const chartsContainer = document.getElementById("charts-container");
+    const stockContainer = document.createElement("div");
+    stockContainer.id = `stock-${symbol}`;
+    stockContainer.innerHTML = `<h2>股票代碼: ${symbol}</h2>
+            <canvas id="price-chart-${symbol}"></canvas>
+            <canvas id="volume-chart-${symbol}"></canvas>`;
+    chartsContainer.appendChild(stockContainer);
+    setTimeout(() => {
+      const priceCanvas = document.getElementById(`price-chart-${symbol}`);
+      const volumeCanvas = document.getElementById(`volume-chart-${symbol}`);
 
-      if (incomingData.price_change_percentage > 0) {
-        chartData.priceColors.push("rgba(255, 0, 0, 1)");
-      } else {
-        chartData.priceColors.push("rgba(0, 128, 0, 1)");
+      if (priceCanvas && volumeCanvas) {
+        stocks[symbol].priceChart = new Chart(priceCanvas.getContext("2d"), {
+          type: "line",
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "即時價格",
+                data: [],
+                borderColor: "blue",
+                fill: false,
+              },
+              {
+                label: "移動平均 (SMA_5)",
+                data: [],
+                borderColor: "green",
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            scales: {
+              x: { title: { display: true, text: "時間" } },
+              y: { title: { display: true, text: "價格" } },
+            },
+          },
+        });
+
+        stocks[symbol].volumeChart = new Chart(volumeCanvas.getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "每秒交易量",
+                data: [],
+                backgroundColor: "orange",
+              },
+            ],
+          },
+          options: {
+            scales: {
+              x: { title: { display: true, text: "時間" } },
+              y: { title: { display: true, text: "交易量" } },
+            },
+          },
+        });
       }
-    } else if (incomingData.type === "MA_data" && incomingData.MA_type === "5_MA_data") {
-      chartData.sma5Data.push(incomingData.sma_5 || null);
+    }, 0);
+  }
+
+  function updateCharts(symbol) {
+    const priceChart = stocks[symbol].priceChart;
+    const volumeChart = stocks[symbol].volumeChart;
+
+    if (priceChart && volumeChart) {
+      const perSecData = stocks[symbol].perSecData;
+      const maData = stocks[symbol].maData;
+
+      priceChart.data.labels = perSecData.map((data) => new Date(data.start).toLocaleTimeString());
+      priceChart.data.datasets[0].data = perSecData.map((data) => data.vwap_price_per_sec);
+      priceChart.data.datasets[1].data = maData.map((data) => data.sma_5);
+      priceChart.update();
+
+      volumeChart.data.labels = perSecData.map((data) => new Date(data.start).toLocaleTimeString());
+      volumeChart.data.datasets[0].data = perSecData.map((data) => data.size_per_sec);
+      volumeChart.update();
     }
-
-    console.log("Updating charts for symbol:", symbol); // 调试信息，确认图表更新
-    chartData.priceChart.update();
-    chartData.sizeChart.update();
-  };
-
-  ws.onerror = function (error) {
-    console.error("WebSocket error: ", error);
-  };
-
-  ws.onclose = function () {
-    console.log("WebSocket connection closed");
-  };
+  }
 });

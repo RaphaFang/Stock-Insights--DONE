@@ -66,21 +66,3 @@ async def websocket_endpoint(ws: WebSocket):
         await ws.close()
 
 # ! 接下來考慮，lkafka這邊先多一個分區，接著我框架在多一個分區，就可以讓接收端更快
-# asyncio.create_task(kafka_consumer_loop("topic_name", "ws_group", "consumer_1"))
-# asyncio.create_task(kafka_consumer_loop("topic_name", "ws_group", "consumer_2"))
-
-# async def kafka_consumer_loop(topic_name, group_id, consumer_id):
-#     consumer = AIOKafkaConsumer(
-#         topic_name,
-#         bootstrap_servers='kafka:9092',
-#         group_id=group_id,  # 消费者组 ID
-#         client_id=consumer_id,  # 每个消费者的独特 ID
-#         auto_offset_reset='earliest',
-#         loop=asyncio.get_event_loop()
-#     )
-#     await consumer.start()
-#     try:
-#         async for message in consumer:
-#             await queue.put(message.value.decode('utf-8'))
-#     finally:
-#         await consumer.stop()

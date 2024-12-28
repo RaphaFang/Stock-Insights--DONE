@@ -1,1 +1,0 @@
-# taipei-day-trip

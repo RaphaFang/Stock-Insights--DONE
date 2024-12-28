@@ -1,6 +1,8 @@
 services:
   fastapi-app:
-    image: raphafang/fastapi-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     network_mode: host

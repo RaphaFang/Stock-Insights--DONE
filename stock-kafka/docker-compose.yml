@@ -1,0 +1,121 @@
+services:
+  kafka:
+    image: "bitnami/kafka:latest"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4G
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    network_mode: host
+    environment:
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@10.0.1.138:9093"
+      KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://10.0.1.138:9092
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_LOG_DIRS: /bitnami/kafka/data
+      KAFKA_CFG_KRAFT_MODE: "true"
+      KAFKA_CFG_KRAFT_STORAGE_ROOT_DIR: /bitnami/kafka/data
+      KAFKA_CFG_KRAFT_METADATA_LOG_DIRS: /bitnami/kafka/meta
+      KAFKA_OPTS: "-Duser.timezone=Asia/Taipei"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_LOG_RETENTION_MINUTES: "5"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - kafka_data:/bitnami/kafka
+
+  kafka-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"
+    network_mode: host
+    environment:
+      KAFKA_BROKER: 10.0.1.138:9092
+      SPARK_LOCAL_IP: 10.0.1.231
+      SPARK_PUBLIC_DNS: 10.0.1.231
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 3G
+
+volumes:
+  kafka_data:
+    driver: local
+# ## 可以運作的swarm版本 ------------------------------------------
+# services:
+#   kafka:
+#     image: "bitnami/kafka:latest"
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: "2"
+#           memory: 4G
+#       placement:
+#         constraints:
+#           - "node.hostname == ip-10-0-1-138"
+#     ports:
+#       - "9092:9092"
+#       - "9093:9093"
+#     environment:
+#       KAFKA_CFG_NODE_ID: "1"
+#       KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+#       KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
+#       KAFKA_CFG_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+#       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+#       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+#       KAFKA_CFG_LOG_DIRS: /bitnami/kafka/data
+#       KAFKA_CFG_KRAFT_MODE: "true"
+#       KAFKA_CFG_KRAFT_STORAGE_ROOT_DIR: /bitnami/kafka/data
+#       KAFKA_CFG_KRAFT_METADATA_LOG_DIRS: /bitnami/kafka/meta
+#       KAFKA_OPTS: "-Duser.timezone=Asia/Taipei"
+#       ALLOW_PLAINTEXT_LISTENER: "yes"
+#       KAFKA_CFG_LOG_RETENTION_MINUTES: "5"
+#     volumes:
+#       - /var/run/docker.sock:/var/run/docker.sock
+#       - kafka_data:/bitnami/kafka
+#     # 要考慮不要設定，不然log太多
+#     networks:
+#       - kafka-net
+
+#   kafka-app:
+#     image: raphafang/kafka-app:latest
+#     # 留著本地測試用
+#     # build: .
+#     env_file:
+#       - .env
+#     ports:
+#       - "8001:8001"
+#     dns:
+#       - 8.8.8.8
+#     environment:
+#       KAFKA_BROKER: kafka:9092
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: "1.5"
+#           memory: 3G
+#       placement:
+#         constraints:
+#           - "node.hostname == ip-10-0-1-138"
+#     networks:
+#       - kafka-net
+#       - aws-net
+# networks:
+#   kafka-net:
+#     driver: overlay
+#     attachable: true
+#   aws-net:
+#     external: true
+
+# volumes:
+#   kafka_data:
+#     driver: local

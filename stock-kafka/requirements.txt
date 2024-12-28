@@ -1,0 +1,9 @@
+asyncio
+fugle_marketdata
+confluent-kafka==2.5.0
+requests
+aiohttp
+schedule
+aiomysql
+aiokafka
+websockets

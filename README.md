@@ -5,7 +5,7 @@ Stock Insight is a service designed for investors who want real-time information
 The raw data is retrieved from [Fugle's](https://developer.fugle.tw/)
 WebSocket API and processed through a Kafka pipeline deployed across AWS EC2 instances. The project aggregates trades occurring within 1 second into actual trading information per second using Spark, and further processes this data into moving averages (MA) for 5MA, 10MA, and 15MA by Spark. The final MA data and per second data are then delivered to the front-end via a WebSocket API.
 
-The project is deployed across three separate AWS EC2 instances, demonstrating the ability to maintain a Kafka pipeline across multiple cloud instances. It also highlights my expertise in **Kafka**, **Spark**, **WebSocket** and proficiency with **AWS services**. The complete development and learning period for this project spanned from September to November 2024.
+The project is deployed across three separate AWS EC2 instances, demonstrating the ability to maintain a Kafka pipeline across multiple cloud instances. It also highlights my expertise in **Kafka**, **Spark**, **WebSocket** and proficiency with **AWS services**. The complete development and learning period for this project spanned from Augest to September 2024.
 
 ## 🎥 Demo
 

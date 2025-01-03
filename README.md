@@ -18,7 +18,7 @@ The project is deployed across three separate AWS EC2 instances, demonstrating t
 ## Sample of Data
 (Symbol 2330 represents [TSMC's](https://www.tsmc.com/english) symbol in the Taiwan stock market.)
 
-- *Raw Data Received*
+1. *Raw Data Received*
     - This represents the raw data I receive from Fugle in real time trading.
     ```json
     {
@@ -41,11 +41,12 @@ The project is deployed across three separate AWS EC2 instances, demonstrating t
       "channel": "trades"
     }
     ```
-- *Data Aggregated Per Second*
+2. *Data Aggregated Per Second*
     - The raw data is aggregated into a per-second summary.
+    - There could be more than 10 pieces of data received per second from the Fugle WebSocket API.
     ![sec_data_sample](https://github.com/user-attachments/assets/b0569679-530e-4e4c-8b19-e7dd979fd97d)
 
-- *5-Second Moving Average (MA) Data*
+3. *5-Second Moving Average (MA) Data*
     - Based on the per-second aggregated data, a 5-second moving average (MA) line is further computed.
     ![MA_data_sample](https://github.com/user-attachments/assets/1d2453ae-13b8-4971-a614-a096f645274f)
 

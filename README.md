@@ -16,8 +16,9 @@ The project is deployed across three separate AWS EC2 instances, demonstrating t
 ![sysArch](https://github.com/user-attachments/assets/47914c67-714b-479a-8d2c-87875f692f1c)
 
 ## Sample of Data
+Note: Symbol 2330 represents [TSMC's](https://www.tsmc.com/english) symbol in the Taiwan stock market.
+
 1. *Raw Data Received*
-    <!-- Note: Symbol 2330 represents TSMC's symbol in the Taiwan stock market. -->
     This represents the raw data I receive from Fugle in real time trading.
     ```json
     {

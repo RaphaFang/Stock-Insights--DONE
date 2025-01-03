@@ -16,34 +16,35 @@ The project is deployed across three separate AWS EC2 instances, demonstrating t
 ![sysArch](https://github.com/user-attachments/assets/47914c67-714b-479a-8d2c-87875f692f1c)
 
 ## Sample of Data
-1. **Raw Data Received**  
+1. *Raw Data Received*
+    <!-- Note: Symbol 2330 represents TSMC's symbol in the Taiwan stock market. -->
     This represents the raw data I receive from Fugle in real time trading.
-```json
-{
-  "event": "data",
-  "data": {
-    "symbol": "2330",
-    "type": "EQUITY",
-    "exchange": "TWSE",
-    "market": "TSE",
-    "bid": 567,
-    "ask": 568,
-    "price": 568,
-    "size": 4778,
-    "volume": 54538,
-    "isClose": true,
-    "time": 1685338200000000,
-    "serial": 6652422
-  },
-  "id": "<CHANNEL_ID>",
-  "channel": "trades"
-}
-```
-2. **Data Aggregated Per Second**  
+    ```json
+    {
+      "event": "data",
+      "data": {
+        "symbol": "2330",
+        "type": "EQUITY",
+        "exchange": "TWSE",
+        "market": "TSE",
+        "bid": 567,
+        "ask": 568,
+        "price": 568,
+        "size": 4778,
+        "volume": 54538,
+        "isClose": true,
+        "time": 1685338200000000,
+        "serial": 6652422
+      },
+      "id": "<CHANNEL_ID>",
+      "channel": "trades"
+    }
+    ```
+2. *Data Aggregated Per Second*
     ![sec_data_sample](https://github.com/user-attachments/assets/b0569679-530e-4e4c-8b19-e7dd979fd97d)
     The raw data is aggregated into a per-second summary.
 
-3. **5-Second Moving Average (MA) Data**  
+3. *5-Second Moving Average (MA) Data*
     ![MA_data_sample](https://github.com/user-attachments/assets/1d2453ae-13b8-4971-a614-a096f645274f)
     Based on the per-second aggregated data, a 5-second moving average (MA) line is further computed.
 
